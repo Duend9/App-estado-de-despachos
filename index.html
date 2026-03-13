@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Registro Despachos Contenedores</title>
+  <style>
+    :root{
+      --bg:#0b1220; --card:#101a33; --text:#e9eefc; --muted:#a7b2d6;
+      --line:#22305a; --accent:#7aa2ff;
+      --ok:#2ecc71; --warn:#f7b500; --work:#2d7dff; --bad:#e74c3c;
+    }
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:linear-gradient(180deg,#070b14, var(--bg)); color:var(--text);}
+    header{padding:18px 18px 10px; position:sticky; top:0; background:rgba(11,18,32,.9); backdrop-filter: blur(6px); border-bottom:1px solid var(--line); z-index:10;}
+    header h1{margin:0;font-size:18px}
+    header p{margin:6px 0 0;color:var(--muted);font-size:13px}
+    .wrap{max-width:1200px;margin:0 auto;padding:16px}
+    .grid{display:grid;gap:12px}
+    @media(min-width:980px){.grid{grid-template-columns: 1.2fr .8fr}}
+    .card{background:rgba(16,26,51,.9); border:1px solid var(--line); border-radius:14px; padding:14px}
+    .card h2{margin:0 0 10px;font-size:15px}
+    .row{display:grid; gap:10px}
+    @media(min-width:720px){.row{grid-template-columns:repeat(3,1fr)}}
+    label{font-size:12px;color:var(--muted);display:block;margin:6px 0 4px}
+    input, select, textarea{
+      width:100%; box-sizing:border-box; padding:10px 10px;
+      background:#0b1430; color:var(--text);
+      border:1px solid var(--line); border-radius:10px; outline:none;
+    }
+    textarea{min-height:80px; resize:vertical}
+    .actions{display:flex;flex-wrap:wrap; gap:10px; margin-top:10px}
+    button{
+      border:1px solid var(--line); background:#0b1430; color:var(--text);
+      padding:10px 12px; border-radius:10px; cursor:pointer; font-weight:650;
+    }
+    button.primary{background:linear-gradient(180deg,#2d7dff,#1f5ed4); border-color:#1f5ed4}
+    button.danger{background:linear-gradient(180deg,#ff6b6b,#e74c3c); border-color:#e74c3c}
+    button.ghost{background:transparent}
+    button:active{transform:translateY(1px)}
+    .note{color:var(--muted); font-size:12px; margin-top:6px}
+    table{width:100%; border-collapse:collapse; overflow:auto}
+    th, td{border-bottom:1px solid var(--line); padding:10px 8px; text-align:left; vertical-align:top; font-size:13px}
+    th{color:var(--muted); font-weight:700; position:sticky; top:68px; background:rgba(16,26,51,.95)}
+    .badge{
+      display:inline-block; padding:6px 10px; border-radius:999px;
+      color:white; font-weight:800; font-size:12px; white-space:nowrap;
+    }
+    .small{font-size:12px;color:var(--muted); margin-top:4px}
+    .tools{display:flex; gap:8px; flex-wrap:wrap}
+    .tools button{padding:8px 10px; font-size:12px}
+    .pill{display:inline-block;padding:3px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:12px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+    .search{display:flex;gap:8px;align-items:center}
+    .search input{max-width:360px}
+  </style>
+</head>
+
+<body>
+<header>
+  <h1>Registro de Despachos de Contenedores</h1>
+  <p>Tablero con semáforo: 🟡 En espera · 🔵 Cargando · 🟢 Despachado · 🔴 No llegó / Cancelado</p>
+</header>
+
+<div class="wrap grid">
+  <section class="card">
+    <div class="topbar">
+      <h2>📋 Ingreso / edición de despacho</h2>
+      <span class="pill" id="statusHint">Nuevo registro</span>
+    </div>
+
+    <form id="form">
+      <div class="row">
+        <div>
+          <label>N° Despacho</label>
+          <input id="numeroDespacho" placeholder="Ej: 42" />
+        </div>
+        <div>
+          <label>Fecha despacho</label>
+          <input id="fechaDespacho" type="date" />
+        </div>
+        <div>
+          <label>Empresa / Exportadora</label>
+          <input id="empresa" placeholder="Ej: Exportadora..." />
+        </div>
+
+        <div>
+          <label>N° Reserva (Booking)</label>
+          <input id="reserva" placeholder="Ej: EBKG..." />
+        </div>
+        <div>
+          <label>N° Contenedor</label>
+          <input id="contenedor" placeholder="Ej: MSDU901260-9" />
+        </div>
+        <div>
+          <label>Naviera</label>
+          <input id="naviera" placeholder="Ej: MSC / MAERSK / HAPAG..." />
+        </div>
+
+        <div>
+          <label>Nave</label>
+          <input id="nave" placeholder="Ej: MSC FREEPORT" />
+        </div>
+        <div>
+          <label>Mercado / Recibidor</label>
+          <input id="recibidor" placeholder="Ej: China / Cliente..." />
+        </div>
+        <div>
+          <label>Puerto embarque</label>
+          <input id="puertoEmbarque" placeholder="Ej: Valparaíso / San Antonio" />
+        </div>
+
+        <div>
+          <label>Puerto destino</label>
+          <input id="puertoDestino" placeholder="Ej: Shanghai / Nansha" />
+        </div>
+        <div>
+          <label>Especie</label>
+          <input id="especie" placeholder="Ej: Manzanas / Cerezas" />
+        </div>
+        <div>
+          <label>Variedad (opcional)</label>
+          <input id="variedad" placeholder="Ej: Fuji / Santina" />
+        </div>
+
+        <div>
+          <label>Planta despacho</label>
+          <input id="planta" placeholder="Ej: Fresh Pak" />
+        </div>
+        <div>
+          <label>Fecha/Hora citación planta</label>
+          <input id="citacion" placeholder="Ej: 15-12-2025 18:00" />
+        </div>
+        <div>
+          <label>Sello</label>
+          <input id="sello" placeholder="Ej: CL002147" />
+        </div>
+
+        <div>
+          <label>Tara (KG)</label>
+          <input id="taraKg" type="number" step="0.01" placeholder="Ej: 4500" />
+        </div>
+        <div>
+          <label>Patente camión</label>
+          <input id="patenteCamion" placeholder="Ej: FHYZ10" />
+        </div>
+        <div>
+          <label>Patente carro</label>
+          <input id="patenteCarro" placeholder="Ej: JWLW25" />
+        </div>
+
+        <div>
+          <label>RUT chofer</label>
+          <input id="rutChofer" placeholder="Ej: 14539339-6" />
+        </div>
+        <div>
+          <label>Nombre chofer</label>
+          <input id="nombreChofer" placeholder="Ej: Raúl Gómez Lara" />
+        </div>
+        <div>
+          <label>Móvil chofer</label>
+          <input id="movilChofer" placeholder="Ej: 9XXXXXXXX" />
+        </div>
+
+        <div>
+          <label>Hora llegada camión (HH:MM)</label>
+          <input id="horaLlegada" type="time" />
+        </div>
+        <div>
+          <label>Hora inicio carga (HH:MM)</label>
+          <input id="horaInicioCarga" type="time" />
+        </div>
+        <div>
+          <label>Hora término carga (HH:MM)</label>
+          <input id="horaTermino" type="time" />
+        </div>
+
+        <div>
+          <label>Set point (opcional)</label>
+          <input id="setPoint" placeholder="Ej: -0.5" />
+        </div>
+        <div>
+          <label>Ventilación (opcional)</label>
+          <input id="ventilacion" placeholder="Ej: 15 CBM" />
+        </div>
+        <div>
+          <label>Termógrafo 1 (opcional)</label>
+          <input id="termografo1" placeholder="Folio / N°" />
+        </div>
+
+        <div>
+          <label>Termógrafo 2 (opcional)</label>
+          <input id="termografo2" placeholder="Folio / N°" />
+        </div>
+        <div style="grid-column:1/-1">
+          <label>Observaciones (opcional)</label>
+          <textarea id="observaciones" placeholder="Notas relevantes (temperaturas, incidentes, etc.)"></textarea>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary" type="submit">➕ Guardar despacho</button>
+        <button class="ghost" type="button" id="btnNuevo">🧹 Nuevo</button>
+        <button class="ghost" type="button" id="btnExport">⬇️ Exportar CSV (Excel)</button>
+        <button class="danger" type="button" id="btnBorrarTodo">🗑️ Borrar todo</button>
+      </div>
+      <div class="note">Tip: el semáforo se calcula automáticamente por horas. Si marcas “No llegó / Cancelado”, ese estado manda por sobre todo.</div>
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="topbar">
+      <h2>🚦 Tablero de despachos</h2>
+      <div class="search">
+        <input id="filtro" placeholder="Buscar (contenedor, despacho, chofer, naviera, etc.)" />
+        <span class="pill" id="count"></span>
+      </div>
+    </div>
+
+    <div style="overflow:auto; max-height:70vh; border-radius:12px">
+      <table id="tabla">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Despacho</th>
+            <th>Contenedor</th>
+            <th>Empresa</th>
+            <th>Nave/Naviera</th>
+            <th>Citación</th>
+            <th>Semáforo</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      Basado en los campos típicos usados en instructivos (reserva, contenedor, patentes, chofer, tara, sello, citación, etc.). [1](https://vecscl-my.sharepoint.com/personal/dennis_hurtado_fresh-pak_cl/Documents/Dennishurtado/Desktop/contenedores/FDI006-HLBU601081-8-FRUTASIA/Informes%20de%20despacho?web=1)
+    </div>
+  </section>
+</div>
+
+<script>
+  // ====== Persistencia local ======
+  const KEY = "despachos_contenedores_v1";
+  let despachos = cargar();
+  let editIndex = null;
+
+  // ====== Utilidades ======
+  const $ = (id) => document.getElementById(id);
+
+  function cargar(){
+    try { return JSON.parse(localStorage.getItem(KEY)) || []; }
+    catch(e){ return []; }
+  }
+  function guardar(){
+    localStorage.setItem(KEY, JSON.stringify(despachos));
+    $("count").textContent = `${despachos.length} registro(s)`;
+  }
+  function ahoraHHMM(){
+    const d = new Date();
+    return d.toTimeString().slice(0,5);
+  }
+
+  // ====== Semáforo (4 estados) ======
+  function calcularEstado(r){
+    if (r.cancelado){
+      return { code:"CANCELADO", label:"No llegó / Cancelado", color:"#E74C3C" };
+    }
+    if (!r.horaLlegada){
+      return { code:"ESPERA", label:"En espera de cargar", color:"#F7B500" };
+    }
+    if (r.horaLlegada && !r.horaTermino){
+      return { code:"CARGANDO", label:"Cargando", color:"#2D7DFF" };
+    }
+    return { code:"DESPACHADO", label:"Despachado", color:"#2ECC71" };
+  }
+
+  // ====== Form <-> Objeto ======
+  const campos = [
+    "numeroDespacho","fechaDespacho","empresa","reserva","contenedor","naviera","nave","recibidor",
+    "puertoEmbarque","puertoDestino","especie","variedad","planta","citacion","sello","taraKg",
+    "patenteCamion","patenteCarro","rutChofer","nombreChofer","movilChofer",
+    "horaLlegada","horaInicioCarga","horaTermino",
+    "setPoint","ventilacion","termografo1","termografo2","observaciones"
+  ];
+
+  function leerForm(){
+    const r = {};
+    campos.forEach(c => r[c] = ($(c).value || "").trim());
+    // Campos de estado
+    r.cancelado = false;
+    r.motivoCancelacion = "";
+    r.horaCancelacion = "";
+    return r;
+  }
+  function cargarForm(r){
+    campos.forEach(c => $(c).value = r[c] || "");
+  }
+  function limpiarForm(){
+    $("form").reset();
+    editIndex = null;
+    $("statusHint").textContent = "Nuevo registro";
+  }
+
+  // ====== Acciones de tablero ======
+  function marcarLlegada(i){
+    despachos[i].cancelado = false;
+    despachos[i].horaLlegada = despachos[i].horaLlegada || ahoraHHMM();
+    guardar(); renderTabla();
+  }
+  function iniciarCarga(i){
+    despachos[i].cancelado = false;
+    despachos[i].horaLlegada = despachos[i].horaLlegada || ahoraHHMM();
+    despachos[i].horaInicioCarga = despachos[i].horaInicioCarga || ahoraHHMM();
+    guardar(); renderTabla();
+  }
+  function terminarCarga(i){
+    despachos[i].cancelado = false;
+    despachos[i].horaLlegada = despachos[i].horaLlegada || ahoraHHMM();
+    despachos[i].horaInicioCarga = despachos[i].horaInicioCarga || ahoraHHMM();
+    despachos[i].horaTermino = despachos[i].horaTermino || ahoraHHMM();
+    guardar(); renderTabla();
+  }
+  function cancelar(i){
+    const motivo = prompt("Motivo (ej: No llegó / Rechazo / Reprogramado):", despachos[i].motivoCancelacion || "No llegó");
+    if (motivo === null) return; // canceló el prompt
+    despachos[i].cancelado = true;
+    despachos[i].motivoCancelacion = (motivo || "No llegó").trim();
+    despachos[i].horaCancelacion = ahoraHHMM();
+    guardar(); renderTabla();
+  }
+  function reactivar(i){
+    despachos[i].cancelado = false;
+    guardar(); renderTabla();
+  }
+  function editar(i){
+    editIndex = i;
+    cargarForm(despachos[i]);
+    $("statusHint").textContent = `Editando registro #${i+1}`;
+    window.scrollTo({top:0, behavior:"smooth"});
+  }
+  function eliminar(i){
+    if (!confirm("¿Eliminar este registro?")) return;
+    despachos.splice(i,1);
+    guardar(); renderTabla();
+  }
+
+  // ====== Render tabla ======
+  function renderTabla(){
+    const q = ($("filtro").value || "").toLowerCase();
+    const tbody = document.querySelector("#tabla tbody");
+    tbody.innerHTML = "";
+
+    const visibles = despachos
+      .map((r, idx) => ({r, idx}))
+      .filter(x => {
+        if (!q) return true;
+        const all = JSON.stringify(x.r).toLowerCase();
+        return all.includes(q);
+      });
+
+    $("count").textContent = `${despachos.length} registro(s) · ${visibles.length} visibles`;
+
+    visibles.forEach(({r, idx}) => {
+      const estado = calcularEstado(r);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.fechaDespacho || ""}</td>
+        <td>${r.numeroDespacho || ""}</td>
+        <td><b>${r.contenedor || ""}</b><div class="small">${r.reserva ? "Reserva: "+r.reserva : ""}</div></td>
+        <td>${r.empresa || ""}</td>
+        <td>${(r.nave||"")}${r.naviera ? "<div class='small'>"+r.naviera+"</div>" : ""}</td>
+        <td>${r.citacion || ""}</td>
+        <td>
+          <span class="badge" style="background:${estado.color}">${estado.label}</span>
+          ${r.cancelado ? `<div class="small">Motivo: ${r.motivoCancelacion || "—"}${r.horaCancelacion ? " ("+r.horaCancelacion+")" : ""}</div>` : ""}
+        </td>
+        <td>
+          <div class="tools">
+            <button onclick="marcarLlegada(${idx})">Llegó</button>
+            <button onclick="iniciarCarga(${idx})">Iniciar</button>
+            <button onclick="terminarCarga(${idx})">Terminar</button>
+            <button class="danger" onclick="cancelar(${idx})">Cancelar</button>
+            <button onclick="reactivar(${idx})">Reactivar</button>
+            <button onclick="editar(${idx})">Editar</button>
+            <button onclick="eliminar(${idx})">Eliminar</button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // ====== Export CSV ======
+  function exportarCSV(){
+    const header = [
+      "numeroDespacho","fechaDespacho","empresa","reserva","contenedor","naviera","nave","recibidor",
+      "puertoEmbarque","puertoDestino","especie","variedad","planta","citacion","sello","taraKg",
+      "patenteCamion","patenteCarro","rutChofer","nombreChofer","movilChofer",
+      "horaLlegada","horaInicioCarga","horaTermino",
+      "setPoint","ventilacion","termografo1","termografo2","observaciones",
+      "estado","motivoCancelacion","horaCancelacion"
+    ];
+
+    const rows = despachos.map(r => {
+      const est = calcularEstado(r).label;
+      return header.map(k => {
+        const v = (k==="estado") ? est : (r[k] ?? "");
+        // Escapar comillas para CSV
+        const s = String(v).replaceAll('"','""');
+        return `"${s}"`;
+      }).join(",");
+    });
+
+    const csv = header.join(",") + "\n" + rows.join("\n");
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `despachos_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  // ====== Eventos ======
+  $("form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const r = leerForm();
+
+    // Si estás editando, conserva flags de cancelación existentes
+    if (editIndex !== null){
+      const prev = despachos[editIndex];
+      r.cancelado = prev.cancelado || false;
+      r.motivoCancelacion = prev.motivoCancelacion || "";
+      r.horaCancelacion = prev.horaCancelacion || "";
+      despachos[editIndex] = r;
+      editIndex = null;
+      $("statusHint").textContent = "Guardado (edición)";
+    } else {
+      despachos.unshift(r); // lo nuevo arriba
+      $("statusHint").textContent = "Guardado (nuevo)";
+    }
+
+    guardar();
+    renderTabla();
+    $("form").reset();
+  });
+
+  $("btnNuevo").addEventListener("click", limpiarForm);
+  $("btnExport").addEventListener("click", exportarCSV);
+  $("btnBorrarTodo").addEventListener("click", () => {
+    if (!confirm("¿Borrar TODOS los registros?")) return;
+    despachos = [];
+    guardar(); renderTabla(); limpiarForm();
+  });
+  $("filtro").addEventListener("input", renderTabla);
+
+  // Init
+  guardar();
+  renderTabla();
+</script>
+</body>
+</html>
