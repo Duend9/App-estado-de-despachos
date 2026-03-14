@@ -16,7 +16,7 @@
 
     .wrap{max-width:1200px;margin:0 auto;padding:16px}
     .grid{display:grid;gap:12px;min-height:70vh;}
-    @media(min-width:980px){.grid{grid-template-columns:1.05fr .95fr}}
+    @media(min-width:980px){.grid{grid-template-columns:1.15fr .85fr}}
 
     .card{background:rgba(16,26,51,.92);border:1px solid var(--line);border-radius:14px;padding:14px}
     .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
@@ -25,10 +25,10 @@
     .pill.bad{color:#ffd0d0;border-color:#e74c3c}
 
     .row{display:grid;gap:10px}
-    @media(min-width:720px){.row{grid-template-columns:repeat(3,1fr)}}
+    @media(min-width:720px){.row{grid-template-columns:repeat(2,1fr)}}
     label{font-size:12px;color:var(--muted);display:block;margin:6px 0 4px}
     input, textarea{width:100%;box-sizing:border-box;padding:10px;background:#0b1430;color:var(--text);border:1px solid var(--line);border-radius:10px;outline:none}
-    textarea{min-height:80px;resize:vertical}
+    textarea{min-height:90px;resize:vertical}
 
     a.btn{display:inline-block;text-decoration:none;font-weight:900;color:var(--text);background:#0b1430;border:1px solid var(--line);padding:10px 12px;border-radius:10px}
     button{border:1px solid var(--line);background:#0b1430;color:var(--text);padding:10px 12px;border-radius:10px;cursor:pointer;font-weight:900}
@@ -51,7 +51,7 @@
       position:fixed; right:16px; bottom:16px;
       background:#0b1430; border:1px solid var(--line);
       padding:12px 14px; border-radius:14px;
-      max-width:460px; z-index:9999;
+      max-width:520px; z-index:9999;
       box-shadow:0 10px 30px rgba(0,0,0,.35);
     }
     .toast strong{display:block;margin-bottom:4px}
@@ -63,7 +63,7 @@
   <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
     <div>
       <h1>✏️ Edición + Acciones (Despachos)</h1>
-      <p>Si no se graba, mira arriba: “Storage: OK” o “BLOQUEADO”. El tablero está en <b>index.html</b>.</p>
+      <p>Guarda por etapas: <b>Llegó → Iniciar → Terminar</b>. (Tablero en <b>index.html</b>). Si no se graba: revisa Storage.</p>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <span class="pill" id="storagePill">Storage: —</span>
@@ -77,11 +77,11 @@
   <section class="card">
     <div class="topbar">
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <input id="filtro" placeholder="Buscar (transporte, despacho, empresa, etc.)" />
+        <input id="filtro" placeholder="Buscar (transporte, despacho, empresa...)" />
         <span class="pill" id="count">0</span>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <a class="btn" href="index.html">🚦 Volver al Tablero</a>
+        <a class="btn" href="index.html">🚦 Tablero</a>
         <button id="btnExport" type="button">⬇️ Exportar CSV</button>
       </div>
     </div>
@@ -94,14 +94,15 @@
             <th>Despacho</th>
             <th>Transporte</th>
             <th>Semáforo</th>
-            <th>Acciones</th>
+            <th>⏱ Tiempo</th>
+            <th>Acciones (etapas)</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
 
-    <div class="note">Tip: “Editar” carga el registro al formulario. “Cancelar” marca 🔴.</div>
+    <div class="note">El tiempo se actualiza automáticamente cada 1 minuto cuando está “Cargando”.</div>
   </section>
 
   <!-- DER -->
@@ -115,9 +116,10 @@
       <div class="row">
         <div><label>N° Despacho</label><input id="numeroDespacho" placeholder="Ej: 42" /></div>
         <div><label>Fecha despacho</label><input id="fechaDespacho" type="date" /></div>
-        <div><label>Empresa / Exportadora</label><input id="empresa" placeholder="Ej: Exportadora..." /></div>
 
+        <div><label>Empresa / Exportadora</label><input id="empresa" placeholder="Ej: Exportadora..." /></div>
         <div><label>Puerto embarque</label><input id="puertoEmbarque" placeholder="Ej: Valparaíso / San Antonio" /></div>
+
         <div><label>Mercado / Recibidor</label><input id="recibidor" placeholder="Ej: China / Cliente..." /></div>
         <div><label>Fecha/Hora citación</label><input id="citacion" placeholder="Ej: 15-12-2025 18:00" /></div>
 
@@ -126,17 +128,20 @@
 
         <div><label>Cantidad de pallets</label><input id="cantidadPallets" type="number" step="1" placeholder="Ej: 20" /></div>
         <div><label>Tipo de carga</label><input id="tipoCarga" placeholder="Ej: 40'RHC / Mix" /></div>
-        <div><label>Transporte</label><input id="transporte" placeholder="Ej: Transportes Muñoz" /></div>
+
+        <div style="grid-column:1/-1"><label>Transporte</label><input id="transporte" placeholder="Ej: Transportes Muñoz" /></div>
 
         <div><label>Hora llegada</label><input id="horaLlegada" type="time" /></div>
         <div><label>Hora inicio carga</label><input id="horaInicioCarga" type="time" /></div>
+
         <div><label>Hora término carga</label><input id="horaTermino" type="time" /></div>
+        <div></div>
 
         <div style="grid-column:1/-1"><label>Observaciones</label><textarea id="observaciones"></textarea></div>
       </div>
 
       <div class="actions">
-        <button class="primary" type="submit">💾 Guardar</button>
+        <button class="primary" type="submit">💾 Guardar cambios</button>
         <button type="button" id="btnNuevo">🧹 Nuevo</button>
         <button class="danger" type="button" id="btnBorrarTodo">🗑️ Borrar todo</button>
       </div>
@@ -152,12 +157,12 @@
 </div>
 
 <script>
-  // 1) Forzar HTTPS (GitHub Pages). En HTTP el almacenamiento suele bloquearse.
+  // Forzar HTTPS en GitHub Pages (evita storage bloqueado en http)
   if (location.hostname.endsWith("github.io") && location.protocol === "http:") {
     location.replace("https://" + location.host + location.pathname + location.search + location.hash);
   }
 
-  // localStorage depende del origen (scheme+host+port). [1](https://vecscl-my.sharepoint.com/personal/archivos_fresh-pak_cl/_layouts/15/Doc.aspx?sourcedoc=%7B4BBAD681-5417-4735-B754-41323CC68778%7D&file=KHATERINE%20MILLACAN%2008-10.docx&action=default&mobileredirect=true&DefaultItemOpen=1)
+  // Storage ligado al origen (scheme/host/port) [1](https://vecscl-my.sharepoint.com/personal/dennis_hurtado_fresh-pak_cl/_layouts/15/Doc.aspx?sourcedoc=%7B2F4D0DD6-921F-4BAD-9337-ACB164350AE7%7D&file=CONTRATO%20DE%20ARRIENDO%20DE%20BINS%20(1).docx&action=default&mobileredirect=true&DefaultItemOpen=1)
   const KEY = "despachos_contenedores_v1";
   const $ = (id) => document.getElementById(id);
 
@@ -169,7 +174,7 @@
     $("toastMsg").textContent = msg;
     const t = $("toast");
     t.style.display = "block";
-    setTimeout(()=> t.style.display="none", 3000);
+    setTimeout(()=> t.style.display="none", 2800);
   }
 
   function storageAvailable(type) {
@@ -191,12 +196,12 @@
       store = sessionStorage; storeName = "sessionStorage";
       $("storagePill").textContent = "Storage: BLOQUEADO → session";
       $("storagePill").classList.add("bad");
-      toast("⚠️ Storage bloqueado", "Se guardará solo mientras el navegador esté abierto.");
+      toast("⚠️ Storage bloqueado", "Guardará solo mientras el navegador esté abierto.");
     } else {
       store = null; storeName = "ninguno";
       $("storagePill").textContent = "Storage: BLOQUEADO (sin guardar)";
       $("storagePill").classList.add("bad");
-      toast("❌ No se puede guardar", "El navegador no permite almacenamiento. Prueba otro navegador o ajusta privacidad.");
+      toast("❌ No se puede guardar", "El navegador no permite almacenamiento.");
     }
   }
   initStorage();
@@ -223,11 +228,51 @@
     if (r.horaCancelacion === undefined) r.horaCancelacion = "";
     return r;
   }
+
   function calcularEstado(r){
     if (r.cancelado) return { code:"CANCELADO", label:"No llegó / Cancelado", color:"#E74C3C" };
     if (!r.horaLlegada) return { code:"ESPERA", label:"En espera", color:"#F7B500" };
     if (r.horaLlegada && !r.horaTermino) return { code:"CARGANDO", label:"Cargando", color:"#2D7DFF" };
     return { code:"DESPACHADO", label:"Despachado", color:"#2ECC71" };
+  }
+
+  // ===== Tiempo transcurrido =====
+  function parseDateTime(fechaISO, hhmm){
+    if (!hhmm) return null;
+    const base = fechaISO ? new Date(fechaISO + "T00:00:00") : new Date();
+    const parts = hhmm.split(":");
+    const hh = parseInt(parts[0] || "0", 10);
+    const mm = parseInt(parts[1] || "0", 10);
+    return new Date(base.getFullYear(), base.getMonth(), base.getDate(), hh, mm, 0);
+  }
+  function diffMinutes(a, b){
+    if (!a || !b) return null;
+    let m = Math.floor((b.getTime() - a.getTime()) / 60000);
+    if (m < 0) m += 24*60; // cruza medianoche
+    return m;
+  }
+  function formatMins(m){
+    if (m === null) return "—";
+    const h = Math.floor(m/60);
+    const mm = m % 60;
+    return h > 0 ? `${h}h ${String(mm).padStart(2,"0")}m` : `${mm}m`;
+  }
+  function calcTiempo(r){
+    const est = calcularEstado(r).code;
+
+    if (r.horaTermino){
+      const start = parseDateTime(r.fechaDespacho, r.horaInicioCarga || r.horaLlegada);
+      const end   = parseDateTime(r.fechaDespacho, r.horaTermino);
+      return formatMins(diffMinutes(start, end));
+    }
+
+    if (est === "CARGANDO"){
+      const start = parseDateTime(r.fechaDespacho, r.horaInicioCarga || r.horaLlegada);
+      if (!start) return "—";
+      return formatMins(diffMinutes(start, new Date()));
+    }
+
+    return "—";
   }
 
   const campos = [
@@ -260,6 +305,7 @@
 
   function renderTabla(){
     despachos = cargar().map(normalizar);
+
     const q = ($("filtro").value || "").toLowerCase();
     const tbody = document.querySelector("#tabla tbody");
     tbody.innerHTML = "";
@@ -277,11 +323,15 @@
       tr.innerHTML = `
         <td>${r.fechaDespacho || ""}</td>
         <td>${r.numeroDespacho || ""}</td>
-        <td><b>${r.transporte || ""}</b><div class="small">Pallets: ${r.cantidadPallets || "—"} · Carga: ${r.tipoCarga || "—"}</div></td>
+        <td>
+          <b>${r.transporte || ""}</b>
+          <div class="small">Pallets: ${r.cantidadPallets || "—"} · Carga: ${r.tipoCarga || "—"}</div>
+        </td>
         <td>
           <span class="badge" style="background:${est.color}">${est.label}</span>
           ${r.cancelado ? `<div class="small">Motivo: ${r.motivoCancelacion || "—"}${r.horaCancelacion ? " ("+r.horaCancelacion+")" : ""}</div>` : ""}
         </td>
+        <td><b>⏱ ${calcTiempo(r)}</b></td>
         <td>
           <div class="tools">
             <button class="good" type="button" onclick="marcarLlegada(${idx})">Llegó</button>
@@ -297,3 +347,119 @@
       tbody.appendChild(tr);
     });
 
+    if (editIndex !== null && despachos[editIndex]) cargarForm(despachos[editIndex]);
+  }
+
+  // ==== Acciones por etapa (guardan en cada clic) ====
+  window.marcarLlegada = (i) => {
+    despachos[i].cancelado = false;
+    despachos[i].horaLlegada = despachos[i].horaLlegada || ahoraHHMM();
+    const ok = guardar();
+    renderTabla();
+    toast(ok?"✅ Guardado":"⚠️ No guardó", "Etapa: Llegó registrada (semáforo pasa a Cargando).");
+  };
+  window.iniciarCarga = (i) => {
+    despachos[i].cancelado = false;
+    despachos[i].horaLlegada = despachos[i].horaLlegada || ahoraHHMM();
+    despachos[i].horaInicioCarga = despachos[i].horaInicioCarga || ahoraHHMM();
+    const ok = guardar();
+    renderTabla();
+    toast(ok?"✅ Guardado":"⚠️ No guardó", "Etapa: Inicio de carga registrada.");
+  };
+  window.terminarCarga = (i) => {
+    despachos[i].cancelado = false;
+    despachos[i].horaLlegada = despachos[i].horaLlegada || ahoraHHMM();
+    despachos[i].horaInicioCarga = despachos[i].horaInicioCarga || ahoraHHMM();
+    despachos[i].horaTermino = despachos[i].horaTermino || ahoraHHMM();
+    const ok = guardar();
+    renderTabla();
+    toast(ok?"✅ Guardado":"⚠️ No guardó", "Etapa: Término de carga registrada (Despachado).");
+  };
+  window.cancelar = (i) => {
+    const motivo = prompt("Motivo:", despachos[i].motivoCancelacion || "No llegó");
+    if (motivo === null) return;
+    despachos[i].cancelado = true;
+    despachos[i].motivoCancelacion = (motivo || "No llegó").trim();
+    despachos[i].horaCancelacion = ahoraHHMM();
+    const ok=guardar(); renderTabla();
+    toast(ok?"✅ Guardado":"⚠️ No guardó", "Marcado como No llegó / Cancelado.");
+  };
+  window.reactivar = (i) => {
+    despachos[i].cancelado=false;
+    const ok=guardar(); renderTabla();
+    toast(ok?"✅ Guardado":"⚠️ No guardó", "Reactivado.");
+  };
+  window.editar = (i) => {
+    editIndex=i;
+    cargarForm(despachos[i]);
+    $("statusHint").textContent=`Editando #${i+1}`;
+    window.scrollTo({top:0,behavior:"smooth"});
+  };
+  window.eliminar = (i) => {
+    if(!confirm("¿Eliminar este registro?")) return;
+    despachos.splice(i,1);
+    const ok=guardar(); renderTabla();
+    toast(ok?"✅ Guardado":"⚠️ No guardó", "Eliminado.");
+  };
+
+  function exportarCSV(){
+    const header = ["numeroDespacho","fechaDespacho","empresa","recibidor","puertoEmbarque","citacion","especie","variedad","cantidadPallets","tipoCarga","transporte","horaLlegada","horaInicioCarga","horaTermino","observaciones","estado","motivoCancelacion","horaCancelacion","id"];
+    const rows = despachos.map(r => {
+      const est = calcularEstado(r).label;
+      return header.map(k => {
+        const v = (k==="estado") ? est : (r[k] ?? "");
+        return `"${String(v).replaceAll('"','""')}"`;
+      }).join(",");
+    });
+    const csv = header.join(",") + "\n" + rows.join("\n");
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `despachos_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  $("form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    let r = leerForm();
+
+    if (editIndex !== null){
+      const prev = normalizar(despachos[editIndex]);
+      r.id = prev.id;
+      r.cancelado = prev.cancelado;
+      r.motivoCancelacion = prev.motivoCancelacion;
+      r.horaCancelacion = prev.horaCancelacion;
+      despachos[editIndex] = r;
+      $("statusHint").textContent = "Guardado (edición)";
+    } else {
+      despachos.unshift(r);
+      $("statusHint").textContent = "Guardado (nuevo)";
+    }
+
+    const ok = guardar();
+    renderTabla();
+    toast(ok ? "✅ Guardado" : "⚠️ No guardó", ok ? "Cambios guardados." : "Revisa Storage/HTTPS.");
+    // No limpiamos automático: usa “Nuevo”
+  });
+
+  $("btnNuevo").addEventListener("click", () => { limpiarForm(); toast("🧹 Nuevo", "Formulario listo."); });
+  $("btnBorrarTodo").addEventListener("click", () => {
+    if (!confirm("¿Borrar TODOS los registros?")) return;
+    despachos = [];
+    const ok = guardar();
+    renderTabla();
+    toast(ok ? "✅ Guardado" : "⚠️ No guardó", ok ? "Todo borrado." : "Storage bloqueado.");
+  });
+  $("btnExport").addEventListener("click", exportarCSV);
+  $("filtro").addEventListener("input", renderTabla);
+
+  // Actualiza el contador de tiempo cada 60s
+  setInterval(renderTabla, 60000);
+
+  // Init
+  renderTabla();
+</script>
+</body>
+</html>
