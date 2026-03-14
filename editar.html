@@ -13,14 +13,17 @@
     header{padding:16px 18px;position:sticky;top:0;background:rgba(11,18,32,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);z-index:10}
     header h1{margin:0;font-size:18px}
     header p{margin:6px 0 0;color:var(--muted);font-size:13px}
+
     .wrap{max-width:1200px;margin:0 auto;padding:16px}
-    .grid{display:grid;gap:12px}
+    .grid{display:grid;gap:12px; min-height:70vh;} /* evita “achatarse” */
     @media(min-width:980px){.grid{grid-template-columns:1.05fr .95fr}}
+
     .card{background:rgba(16,26,51,.92);border:1px solid var(--line);border-radius:14px;padding:14px}
     .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
     .pill{display:inline-block;padding:3px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:12px;font-weight:800}
     .pill.ok{color:#b9ffd6;border-color:#2ecc71}
     .pill.bad{color:#ffd0d0;border-color:#e74c3c}
+
     .row{display:grid;gap:10px}
     @media(min-width:720px){.row{grid-template-columns:repeat(3,1fr)}}
     label{font-size:12px;color:var(--muted);display:block;margin:6px 0 4px}
@@ -32,6 +35,7 @@
     button.good{background:linear-gradient(180deg,#3be28a,#2ecc71);border-color:#2ecc71}
     button.danger{background:linear-gradient(180deg,#ff6b6b,#e74c3c);border-color:#e74c3c}
     .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+
     table{width:100%;border-collapse:collapse}
     th,td{border-bottom:1px solid var(--line);padding:10px 8px;text-align:left;vertical-align:top;font-size:13px}
     th{color:var(--muted);font-weight:900;position:sticky;top:74px;background:rgba(16,26,51,.96)}
@@ -40,6 +44,7 @@
     .tools{display:flex;gap:8px;flex-wrap:wrap}
     .tools button{padding:8px 10px;font-size:12px}
     .note{color:var(--muted);font-size:12px;margin-top:10px}
+
     .toast{
       display:none;
       position:fixed; right:16px; bottom:16px;
@@ -57,7 +62,7 @@
   <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
     <div>
       <h1>✏️ Edición + Acciones (Despachos)</h1>
-      <p>Si no se graba, aquí arriba verás “Storage: BLOQUEADO”. (El tablero está en <b>index.html</b>.)</p>
+      <p>Si no se graba, arriba verás “Storage: BLOQUEADO”. El tablero está en <b>index.html</b>.</p>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <span class="pill" id="storagePill">Storage: —</span>
@@ -67,7 +72,6 @@
 </header>
 
 <div class="wrap grid">
-
   <!-- IZQ -->
   <section class="card">
     <div class="topbar">
@@ -96,7 +100,7 @@
       </table>
     </div>
 
-    <div class="note">Tip: si guardas y no aparece en la lista, el “Storage” está bloqueado o el script no está guardando.</div>
+    <div class="note">Tip: “Editar” carga el registro al formulario. “Cancelar” marca 🔴.</div>
   </section>
 
   <!-- DER -->
@@ -117,165 +121,7 @@
         <div><label>Fecha/Hora citación</label><input id="citacion" placeholder="Ej: 15-12-2025 18:00" /></div>
 
         <div><label>Especie</label><input id="especie" placeholder="Ej: Manzanas / Cerezas" /></div>
-        <div><label>Variedad (opcional)</label><input id="variedad" placeholder="Ej: Fuji / Santina" /></div>
+        <div><label>Variedad</label><input id="variedad" placeholder="Ej: Fuji / Santina" /></div>
 
         <div><label>Cantidad de pallets</label><input id="cantidadPallets" type="number" step="1" placeholder="Ej: 20" /></div>
-        <div><label>Tipo de carga</label><input id="tipoCarga" placeholder="Ej: 40'RHC / Mix / etc." /></div>
-        <div><label>Transporte</label><input id="transporte" placeholder="Ej: Transportes Muñoz" /></div>
-
-        <div><label>Hora llegada</label><input id="horaLlegada" type="time" /></div>
-        <div><label>Hora inicio carga</label><input id="horaInicioCarga" type="time" /></div>
-        <div><label>Hora término carga</label><input id="horaTermino" type="time" /></div>
-
-        <div style="grid-column:1/-1"><label>Observaciones</label><textarea id="observaciones"></textarea></div>
-      </div>
-
-      <div class="actions">
-        <button class="primary" type="submit">💾 Guardar</button>
-        <button type="button" id="btnNuevo">🧹 Nuevo</button>
-        <button class="danger" type="button" id="btnBorrarTodo">🗑️ Borrar todo</button>
-      </div>
-
-      <div class="note" id="estadoActual">Estado: —</div>
-    </form>
-  </section>
-
-</div>
-
-<div class="toast" id="toast">
-  <strong id="toastTitle">—</strong>
-  <div id="toastMsg">—</div>
-</div>
-
-<script>
-  // IMPORTANTE: localStorage se asocia al origen del sitio (misma URL base). [1](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site)
-
-  const KEY = "despachos_contenedores_v1";
-  const FALLBACK_KEY = "despachos_contenedores_v1_fallback";
-  const $ = (id) => document.getElementById(id);
-
-  let store = null; // localStorage o sessionStorage
-  let storeName = "—";
-
-  function toast(title, msg){
-    $("toastTitle").textContent = title;
-    $("toastMsg").textContent = msg;
-    const t = $("toast");
-    t.style.display = "block";
-    setTimeout(()=> t.style.display="none", 3500);
-  }
-
-  function storageAvailable(type) {
-    try {
-      const s = window[type];
-      const x = "__test__" + Date.now();
-      s.setItem(x, x);
-      s.removeItem(x);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function initStorage(){
-    if (storageAvailable("localStorage")) {
-      store = localStorage;
-      storeName = "localStorage";
-      $("storagePill").textContent = "Storage: OK (local)";
-      $("storagePill").classList.add("ok");
-    } else if (storageAvailable("sessionStorage")) {
-      store = sessionStorage;
-      storeName = "sessionStorage";
-      $("storagePill").textContent = "Storage: BLOQUEADO → usando session";
-      $("storagePill").classList.add("bad");
-      toast("⚠️ Storage bloqueado", "Tu navegador bloqueó localStorage. Se guardará SOLO mientras el navegador esté abierto.");
-    } else {
-      store = null;
-      storeName = "ninguno";
-      $("storagePill").textContent = "Storage: BLOQUEADO (sin guardar)";
-      $("storagePill").classList.add("bad");
-      toast("❌ No se puede guardar", "El navegador no permite almacenamiento. Prueba otro navegador o desactiva bloqueo estricto.");
-    }
-  }
-
-  initStorage();
-
-  function cargar(){
-    if (!store) return [];
-    try { return JSON.parse(store.getItem(KEY)) || []; }
-    catch(e){ return []; }
-  }
-  function guardar(){
-    if (!store) return false;
-    try {
-      store.setItem(KEY, JSON.stringify(despachos));
-      return true;
-    } catch (e) {
-      // fallback por si justo falla localStorage al escribir (cuotas/privacidad)
-      try {
-        sessionStorage.setItem(FALLBACK_KEY, JSON.stringify(despachos));
-      } catch(_){}
-      return false;
-    }
-  }
-
-  function ahoraHHMM(){
-    const d = new Date();
-    return d.toTimeString().slice(0,5);
-  }
-
-  function normalizar(r){
-    r = r || {};
-    if (!r.id) r.id = String(Date.now()) + "_" + Math.random().toString(16).slice(2);
-    if (r.cancelado === undefined) r.cancelado = false;
-    if (r.motivoCancelacion === undefined) r.motivoCancelacion = "";
-    if (r.horaCancelacion === undefined) r.horaCancelacion = "";
-    return r;
-  }
-
-  function calcularEstado(r){
-    if (r.cancelado) return { code:"CANCELADO", label:"No llegó / Cancelado", color:"#E74C3C" };
-    if (!r.horaLlegada) return { code:"ESPERA", label:"En espera de cargar", color:"#F7B500" };
-    if (r.horaLlegada && !r.horaTermino) return { code:"CARGANDO", label:"Cargando", color:"#2D7DFF" };
-    return { code:"DESPACHADO", label:"Despachado", color:"#2ECC71" };
-  }
-
-  const campos = [
-    "numeroDespacho","fechaDespacho","empresa",
-    "recibidor","puertoEmbarque","citacion",
-    "especie","variedad",
-    "cantidadPallets","tipoCarga","transporte",
-    "horaLlegada","horaInicioCarga","horaTermino",
-    "observaciones"
-  ];
-
-  function leerForm(){
-    const r = {};
-    campos.forEach(c => r[c] = ($(c).value || "").trim());
-    return normalizar(r);
-  }
-  function cargarForm(r){
-    campos.forEach(c => $(c).value = r[c] || "");
-    $("estadoActual").textContent = `Estado: ${calcularEstado(r).label}`;
-  }
-  function limpiarForm(){
-    $("form").reset();
-    editIndex = null;
-    $("statusHint").textContent = "Nuevo registro";
-    $("estadoActual").textContent = "Estado: —";
-  }
-
-  // Estado global
-  let despachos = cargar().map(normalizar);
-  let editIndex = null;
-
-  function marcarLlegada(i){
-    despachos[i].cancelado = false;
-    despachos[i].horaLlegada = despachos[i].horaLlegada || ahoraHHMM();
-    const ok = guardar();
-    renderTabla();
-    toast(ok ? "✅ Guardado" : "⚠️ No guardó", ok ? `Estado actualizado (${storeName}).` : "Revisa el indicador de Storage arriba.");
-  }
-  function iniciarCarga(i){
-    despachos[i].cancelado = false;
-    despachos[i].horaLlegada = despachos[i].horaLlegada || ahoraHHMM();
+        <div><label>Tipo de carga</label><input id="tipoCarga" placeholder="Ej: 40'RHC / Mix" /></div>
