@@ -1,4 +1,4 @@
-<!doctype html>
+ <!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
@@ -9,6 +9,7 @@
     :root{
       --bg:#0b1220; --card:#101a33; --text:#e9eefc; --muted:#a7b2d6;
       --line:#22305a; --ok:#2ecc71; --warn:#f7b500; --work:#2d7dff; --bad:#e74c3c;
+      --alert:#ff4d4d;
     }
     body{
       margin:0;
@@ -26,7 +27,7 @@
       z-index:10;
     }
 
-    .wrap{max-width:1400px;margin:0 auto;padding:14px}
+    .wrap{max-width:1500px;margin:0 auto;padding:14px}
     .card{background:rgba(16,26,51,.92);border:1px solid var(--line);border-radius:14px;padding:14px}
 
     /* TOP */
@@ -36,10 +37,10 @@
       align-items:center;
     }
     @media(min-width:980px){
-      .top{grid-template-columns:1.2fr 1fr 1.6fr}
+      .top{grid-template-columns:1.3fr 1fr 1.7fr}
     }
 
-    .title h1{margin:0;font-size:20px}
+    .title h1{margin:0;font-size:22px}
     .title p{margin:6px 0 0;color:var(--muted);font-size:13px}
 
     .clockBox{
@@ -49,12 +50,12 @@
       padding:12px;
       background:#0b1430;
     }
-    .clock{font-size:44px;font-weight:900}
+    .clock{font-size:46px;font-weight:900}
     .date{margin-top:4px;font-size:14px;color:var(--muted)}
 
     .kpis{
       display:grid;
-      grid-template-columns:repeat(4,1fr);
+      grid-template-columns:repeat(5,1fr);
       gap:10px;
     }
     .kpi{
@@ -70,13 +71,14 @@
     .kpi.work .value{color:var(--work)}
     .kpi.ok .value{color:var(--ok)}
     .kpi.bad .value{color:var(--bad)}
+    .kpi.pallets .value{color:#cfa9ff}
 
     /* TABLE */
     table{width:100%;border-collapse:collapse}
     th,td{
       border-bottom:1px solid var(--line);
       padding:10px 8px;
-      font-size:14px;
+      font-size:15px;
       text-align:left;
       vertical-align:top;
     }
@@ -84,7 +86,7 @@
       color:var(--muted);
       font-weight:900;
       position:sticky;
-      top:190px;
+      top:205px;
       background:rgba(16,26,51,.96);
     }
 
@@ -94,14 +96,18 @@
       border-radius:999px;
       color:#fff;
       font-weight:900;
-      font-size:12px;
+      font-size:13px;
     }
     .small{font-size:12px;color:var(--muted)}
+
+    tr.alerta{
+      background:rgba(255,77,77,.12);
+    }
 
     /* TV MODE */
     body.tv th, body.tv td{font-size:18px}
     body.tv .clock{font-size:64px}
-    body.tv .kpi .value{font-size:34px}
+    body.tv .kpi .value{font-size:36px}
   </style>
 </head>
 
@@ -111,7 +117,7 @@
   <div class="wrap top">
     <div class="title">
       <h1>🚦 Tablero de Despachos</h1>
-      <p>Solo lectura · Actualización automática</p>
+      <p>Reloj · Resumen · Alertas automáticas</p>
     </div>
 
     <div class="clockBox">
@@ -120,22 +126,11 @@
     </div>
 
     <div class="kpis">
-      <div class="kpi wait">
-        <div class="label">🟡 En espera</div>
-        <div class="value" id="kpiEspera">0</div>
-      </div>
-      <div class="kpi work">
-        <div class="label">🔵 Cargando</div>
-        <div class="value" id="kpiCargando">0</div>
-      </div>
-      <div class="kpi ok">
-        <div class="label">🟢 Despachado</div>
-        <div class="value" id="kpiDespachado">0</div>
-      </div>
-      <div class="kpi bad">
-        <div class="label">🔴 No llegó</div>
-        <div class="value" id="kpiCancelado">0</div>
-      </div>
+      <div class="kpi wait"><div class="label">🟡 En espera</div><div class="value" id="kpiEspera">0</div></div>
+      <div class="kpi work"><div class="label">🔵 Cargando</div><div class="value" id="kpiCargando">0</div></div>
+      <div class="kpi ok"><div class="label">🟢 Despachado</div><div class="value" id="kpiDespachado">0</div></div>
+      <div class="kpi bad"><div class="label">🔴 No llegó</div><div class="value" id="kpiCancelado">0</div></div>
+      <div class="kpi pallets"><div class="label">📦 Pallets HOY</div><div class="value" id="kpiPallets">0</div></div>
     </div>
   </div>
 </header>
@@ -147,7 +142,7 @@
         <thead>
           <tr>
             <th>Despacho</th>
-            <th>Exportadora / Movimiento</th>
+            <th>Exportadora</th>
             <th>Variedad / Mercado</th>
             <th>Transporte</th>
             <th>Pallets / Citación</th>
@@ -162,20 +157,19 @@
 </div>
 
 <script>
-  const KEY = "despachos_contenedores_v1";
-  const $ = id => document.getElementById(id);
+  const KEY="despachos_contenedores_v1";
+  const LIMITE_ALERTA=90; // minutos
+  const $=id=>document.getElementById(id);
 
   function tickClock(){
-    const d = new Date();
-    $("clock").textContent = d.toLocaleTimeString("es-CL");
-    $("date").textContent = d.toLocaleDateString("es-CL",
-      {weekday:"long", year:"numeric", month:"long", day:"numeric"});
+    const d=new Date();
+    $("clock").textContent=d.toLocaleTimeString("es-CL");
+    $("date").textContent=d.toLocaleDateString("es-CL",
+      {weekday:"long",year:"numeric",month:"long",day:"numeric"});
   }
-  setInterval(tickClock,1000); tickClock();
+  setInterval(tickClock,1000);tickClock();
 
-  function cargar(){
-    try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e){return[]}
-  }
+  function cargar(){try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e){return[]}}
 
   function estado(r){
     if(r.cancelado) return {t:"No llegó",c:"#e74c3c",k:"bad"};
@@ -187,11 +181,11 @@
   function parse(hhmm){
     if(!hhmm) return null;
     const [h,m]=hhmm.split(":").map(Number);
-    const d=new Date(); d.setHours(h,m,0,0); return d;
+    const d=new Date();d.setHours(h,m,0,0);return d;
   }
   function diff(a,b){
     if(!a||!b) return null;
-    let m=Math.floor((b-a)/60000); if(m<0)m+=1440; return m;
+    let m=Math.floor((b-a)/60000);if(m<0)m+=1440;return m;
   }
   function fmt(m){
     if(m==null) return "—";
@@ -206,31 +200,36 @@
 
   function render(){
     const data=cargar();
-    let c={wait:0,work:0,ok:0,bad:0};
+    let k={wait:0,work:0,ok:0,bad:0}, palletsHoy=0;
     const tbody=document.querySelector("#tabla tbody");
     tbody.innerHTML="";
 
     data.forEach(r=>{
-      const e=estado(r); c[e.k]++;
+      const e=estado(r);k[e.k]++;
+      if(e.k==="ok") palletsHoy+=Number(r.cantidadPallets||0);
+      const mins=tiempo(r);
       const tr=document.createElement("tr");
+      if(e.k==="work" && mins>=LIMITE_ALERTA) tr.classList.add("alerta");
       tr.innerHTML=`
         <td><b>${r.numeroDespacho||""}</b></td>
-        <td><b>${r.exportadora||""}</b><div class="small">${r.tipoMovimiento||""}</div></td>
+        <td>${r.exportadora||""}</td>
         <td><b>${r.variedad||""}</b><div class="small">${r.mercado||""}</div></td>
         <td>${r.transporte||""}</td>
         <td><b>${r.cantidadPallets||"—"}</b><div class="small">${r.horaCitacion||"—"}</div></td>
         <td><span class="badge" style="background:${e.c}">${e.t}</span></td>
-        <td><b>${fmt(tiempo(r))}</b></td>`;
+        <td><b>${fmt(mins)}</b></td>`;
       tbody.appendChild(tr);
     });
 
-    $("kpiEspera").textContent=c.wait;
-    $("kpiCargando").textContent=c.work;
-    $("kpiDespachado").textContent=c.ok;
-    $("kpiCancelado").textContent=c.bad;
+    $("kpiEspera").textContent=k.wait;
+    $("kpiCargando").textContent=k.work;
+    $("kpiDespachado").textContent=k.ok;
+    $("kpiCancelado").textContent=k.bad;
+    $("kpiPallets").textContent=palletsHoy;
   }
 
   setInterval(render,60000);
+  setTimeout(()=>document.body.classList.add("tv"),10000);
   render();
 </script>
 
