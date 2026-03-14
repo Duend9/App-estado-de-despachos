@@ -18,27 +18,65 @@
     }
     header{
       padding:16px 18px;
-      background:rgba(11,18,32,.94);
+      position:sticky;
+      top:0;
+      background:rgba(11,18,32,.95);
       backdrop-filter: blur(6px);
       border-bottom:1px solid var(--line);
-      position:sticky; top:0; z-index:10;
+      z-index:10;
     }
-    header h1{margin:0;font-size:20px}
-    header p{margin:6px 0 0;color:var(--muted);font-size:13px}
 
-    .wrap{max-width:1400px;margin:0 auto;padding:16px}
-    .card{
-      background:rgba(16,26,51,.92);
+    .wrap{max-width:1400px;margin:0 auto;padding:14px}
+    .card{background:rgba(16,26,51,.92);border:1px solid var(--line);border-radius:14px;padding:14px}
+
+    /* TOP */
+    .top{
+      display:grid;
+      gap:12px;
+      align-items:center;
+    }
+    @media(min-width:980px){
+      .top{grid-template-columns:1.2fr 1fr 1.6fr}
+    }
+
+    .title h1{margin:0;font-size:20px}
+    .title p{margin:6px 0 0;color:var(--muted);font-size:13px}
+
+    .clockBox{
+      text-align:center;
       border:1px solid var(--line);
       border-radius:14px;
-      padding:14px;
+      padding:12px;
+      background:#0b1430;
     }
+    .clock{font-size:44px;font-weight:900}
+    .date{margin-top:4px;font-size:14px;color:var(--muted)}
 
+    .kpis{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:10px;
+    }
+    .kpi{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px;
+      background:#0b1430;
+      text-align:center;
+    }
+    .kpi .label{font-size:12px;color:var(--muted);font-weight:800}
+    .kpi .value{font-size:26px;font-weight:900;margin-top:4px}
+    .kpi.wait .value{color:var(--warn)}
+    .kpi.work .value{color:var(--work)}
+    .kpi.ok .value{color:var(--ok)}
+    .kpi.bad .value{color:var(--bad)}
+
+    /* TABLE */
     table{width:100%;border-collapse:collapse}
     th,td{
       border-bottom:1px solid var(--line);
       padding:10px 8px;
-      font-size:13px;
+      font-size:14px;
       text-align:left;
       vertical-align:top;
     }
@@ -46,7 +84,7 @@
       color:var(--muted);
       font-weight:900;
       position:sticky;
-      top:86px;
+      top:190px;
       background:rgba(16,26,51,.96);
     }
 
@@ -57,56 +95,54 @@
       color:#fff;
       font-weight:900;
       font-size:12px;
-      white-space:nowrap;
     }
     .small{font-size:12px;color:var(--muted)}
 
-    .topbar{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:10px;
-      align-items:center;
-    }
-
-    input{
-      padding:10px;
-      border-radius:10px;
-      border:1px solid var(--line);
-      background:#0b1430;
-      color:var(--text);
-      min-width:260px;
-    }
-
-    a.btn{
-      text-decoration:none;
-      font-weight:900;
-      background:#0b1430;
-      color:var(--text);
-      border:1px solid var(--line);
-      padding:10px 12px;
-      border-radius:10px;
-    }
+    /* TV MODE */
+    body.tv th, body.tv td{font-size:18px}
+    body.tv .clock{font-size:64px}
+    body.tv .kpi .value{font-size:34px}
   </style>
 </head>
 
 <body>
 
 <header>
-  <h1>🚦 Tablero de Despachos</h1>
-  <p>Solo lectura · Semáforo automático · Datos desde editar.html</p>
+  <div class="wrap top">
+    <div class="title">
+      <h1>🚦 Tablero de Despachos</h1>
+      <p>Solo lectura · Actualización automática</p>
+    </div>
+
+    <div class="clockBox">
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="date" id="date">—</div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi wait">
+        <div class="label">🟡 En espera</div>
+        <div class="value" id="kpiEspera">0</div>
+      </div>
+      <div class="kpi work">
+        <div class="label">🔵 Cargando</div>
+        <div class="value" id="kpiCargando">0</div>
+      </div>
+      <div class="kpi ok">
+        <div class="label">🟢 Despachado</div>
+        <div class="value" id="kpiDespachado">0</div>
+      </div>
+      <div class="kpi bad">
+        <div class="label">🔴 No llegó</div>
+        <div class="value" id="kpiCancelado">0</div>
+      </div>
+    </div>
+  </div>
 </header>
 
 <div class="wrap">
   <section class="card">
-
-    <div class="topbar">
-      <input id="filtro" placeholder="Buscar (exportadora, mercado, transporte, despacho…)">
-      editar.html✏️ Editar</a>
-    </div>
-
-    <div style="overflow:auto; max-height:72vh">
+    <div style="overflow:auto;max-height:72vh">
       <table id="tabla">
         <thead>
           <tr>
@@ -122,7 +158,6 @@
         <tbody></tbody>
       </table>
     </div>
-
   </section>
 </div>
 
@@ -130,75 +165,72 @@
   const KEY = "despachos_contenedores_v1";
   const $ = id => document.getElementById(id);
 
+  function tickClock(){
+    const d = new Date();
+    $("clock").textContent = d.toLocaleTimeString("es-CL");
+    $("date").textContent = d.toLocaleDateString("es-CL",
+      {weekday:"long", year:"numeric", month:"long", day:"numeric"});
+  }
+  setInterval(tickClock,1000); tickClock();
+
   function cargar(){
-    try { return JSON.parse(localStorage.getItem(KEY)) || []; }
-    catch(e){ return []; }
+    try{return JSON.parse(localStorage.getItem(KEY))||[]}catch(e){return[]}
   }
 
   function estado(r){
-    if (r.cancelado) return {t:"No llegó", c:"#e74c3c"};
-    if (!r.horaLlegada) return {t:"En espera", c:"#f7b500"};
-    if (!r.horaTermino) return {t:"Cargando", c:"#2d7dff"};
-    return {t:"Despachado", c:"#2ecc71"};
+    if(r.cancelado) return {t:"No llegó",c:"#e74c3c",k:"bad"};
+    if(!r.horaLlegada) return {t:"En espera",c:"#f7b500",k:"wait"};
+    if(!r.horaTermino) return {t:"Cargando",c:"#2d7dff",k:"work"};
+    return {t:"Despachado",c:"#2ecc71",k:"ok"};
   }
 
   function parse(hhmm){
     if(!hhmm) return null;
-    const [h,m] = hhmm.split(":").map(Number);
-    const d = new Date();
-    d.setHours(h,m,0,0);
-    return d;
+    const [h,m]=hhmm.split(":").map(Number);
+    const d=new Date(); d.setHours(h,m,0,0); return d;
   }
-
-  function diffMin(a,b){
+  function diff(a,b){
     if(!a||!b) return null;
-    let m = Math.floor((b-a)/60000);
-    if(m<0) m+=1440;
-    return m;
+    let m=Math.floor((b-a)/60000); if(m<0)m+=1440; return m;
   }
-
+  function fmt(m){
+    if(m==null) return "—";
+    const h=Math.floor(m/60),mm=m%60;
+    return h>0?`${h}h ${mm}m`:`${mm}m`;
+  }
   function tiempo(r){
-    if(r.horaTermino){
-      return diffMin(parse(r.horaInicioCarga||r.horaLlegada), parse(r.horaTermino));
-    }
-    if(r.horaLlegada){
-      return diffMin(parse(r.horaInicioCarga||r.horaLlegada), new Date());
-    }
+    if(r.horaTermino) return diff(parse(r.horaInicioCarga||r.horaLlegada),parse(r.horaTermino));
+    if(r.horaLlegada) return diff(parse(r.horaInicioCarga||r.horaLlegada),new Date());
     return null;
   }
 
-  function fmt(m){
-    if(m==null) return "—";
-    const h=Math.floor(m/60), mm=m%60;
-    return h>0 ? `${h}h ${mm}m` : `${mm}m`;
-  }
-
   function render(){
-    const data = cargar();
-    const q = ($("filtro").value||"").toLowerCase();
-    const tbody = document.querySelector("#tabla tbody");
+    const data=cargar();
+    let c={wait:0,work:0,ok:0,bad:0};
+    const tbody=document.querySelector("#tabla tbody");
     tbody.innerHTML="";
 
-    data
-      .filter(r => !q || JSON.stringify(r).toLowerCase().includes(q))
-      .forEach(r=>{
-        const e = estado(r);
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td><b>${r.numeroDespacho||""}</b></td>
-          <td><b>${r.exportadora||""}</b><div class="small">${r.tipoMovimiento||""}</div></td>
-          <td><b>${r.variedad||""}</b><div class="small">${r.mercado||""}</div></td>
-          <td>${r.transporte||""}</td>
-          <td><b>${r.cantidadPallets||"—"}</b><div class="small">${r.horaCitacion||"—"}</div></td>
-          <td><span class="badge" style="background:${e.c}">${e.t}</span></td>
-          <td><b>${fmt(tiempo(r))}</b></td>
-        `;
-        tbody.appendChild(tr);
-      });
+    data.forEach(r=>{
+      const e=estado(r); c[e.k]++;
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+        <td><b>${r.numeroDespacho||""}</b></td>
+        <td><b>${r.exportadora||""}</b><div class="small">${r.tipoMovimiento||""}</div></td>
+        <td><b>${r.variedad||""}</b><div class="small">${r.mercado||""}</div></td>
+        <td>${r.transporte||""}</td>
+        <td><b>${r.cantidadPallets||"—"}</b><div class="small">${r.horaCitacion||"—"}</div></td>
+        <td><span class="badge" style="background:${e.c}">${e.t}</span></td>
+        <td><b>${fmt(tiempo(r))}</b></td>`;
+      tbody.appendChild(tr);
+    });
+
+    $("kpiEspera").textContent=c.wait;
+    $("kpiCargando").textContent=c.work;
+    $("kpiDespachado").textContent=c.ok;
+    $("kpiCancelado").textContent=c.bad;
   }
 
-  $("filtro").addEventListener("input", render);
-  setInterval(render, 60000);
+  setInterval(render,60000);
   render();
 </script>
 
