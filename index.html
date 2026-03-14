@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tablero Despachos Contenedores</title>
+  <title>Tablero Despachos (Solo lectura)</title>
   <style>
     :root{
       --bg:#0b1220; --card:#101a33; --text:#e9eefc; --muted:#a7b2d6;
@@ -23,26 +23,25 @@
       padding:10px 10px; outline:none; min-width:260px;
     }
     a.btn{
-      display:inline-block; text-decoration:none; font-weight:800; color:var(--text);
+      display:inline-block; text-decoration:none; font-weight:900; color:var(--text);
       background:#0b1430; border:1px solid var(--line); padding:10px 12px; border-radius:10px;
+    }
+    button{
+      border:1px solid var(--line); background:#0b1430; color:var(--text);
+      padding:10px 12px; border-radius:10px; cursor:pointer; font-weight:900;
     }
     table{width:100%; border-collapse:collapse}
     th, td{border-bottom:1px solid var(--line); padding:10px 8px; text-align:left; vertical-align:top; font-size:13px}
-    th{color:var(--muted); font-weight:800; position:sticky; top:74px; background:rgba(16,26,51,.96)}
+    th{color:var(--muted); font-weight:900; position:sticky; top:74px; background:rgba(16,26,51,.96)}
     .badge{display:inline-block;padding:6px 10px;border-radius:999px;color:white;font-weight:900;font-size:12px;white-space:nowrap}
     .small{font-size:12px;color:var(--muted);margin-top:4px}
     .note{color:var(--muted); font-size:12px; margin-top:10px}
-    .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    button{
-      border:1px solid var(--line); background:#0b1430; color:var(--text);
-      padding:10px 12px; border-radius:10px; cursor:pointer; font-weight:800;
-    }
   </style>
 </head>
 
 <body>
 <header>
-  <h1>🚦 Tablero de Despachos de Contenedores (Solo lectura)</h1>
+  <h1>🚦 Tablero de Despachos (Solo lectura)</h1>
   <p>Semáforo: 🟡 En espera · 🔵 Cargando · 🟢 Despachado · 🔴 No llegó / Cancelado</p>
 </header>
 
@@ -50,11 +49,11 @@
   <section class="card">
     <div class="topbar">
       <div class="search">
-        <input id="filtro" placeholder="Buscar (contenedor, despacho, chofer, naviera, etc.)" />
+        <input id="filtro" placeholder="Buscar (transporte, despacho, empresa, etc.)" />
         <span class="pill" id="count">0</span>
       </div>
-      <div class="right">
-        <a class="btn" href="editar.html">✏️ Ir a Edición (acciones)</a>
+      <div class="search">
+        <a class="btn" href="editar.html">✏️ Ir a Edición</a>
         <button id="btnRefresh">🔄 Actualizar</button>
         <span class="pill" id="last">—</span>
       </div>
@@ -66,9 +65,8 @@
           <tr>
             <th>Fecha</th>
             <th>Despacho</th>
-            <th>Contenedor</th>
+            <th>Transporte</th>
             <th>Empresa</th>
-            <th>Nave / Naviera</th>
             <th>Citación</th>
             <th>Semáforo</th>
             <th>Horas</th>
@@ -80,14 +78,13 @@
     </div>
 
     <div class="note">
-      Este tablero solo muestra información. Para actualizar estados (Llegó/Iniciar/Terminar/Cancelar) usa “Ir a Edición”. [2](https://vecscl-my.sharepoint.com/personal/dennis_hurtado_fresh-pak_cl/Documents/Dennishurtado/Desktop/contenedores/FDI003-HLBU993662-8-Yiannis/Informes%20de%20despacho?web=1)
+      Este tablero no tiene acciones. Para actualizar estados usa <b>editar.html</b>.
     </div>
   </section>
 </div>
 
 <script>
   const KEY = "despachos_contenedores_v1";
-
   const $ = (id) => document.getElementById(id);
 
   function cargar(){
@@ -96,13 +93,11 @@
   }
   function normalizar(r){
     r = r || {};
-    // compatibilidad por si venías de una versión anterior
     if (r.cancelado === undefined) r.cancelado = false;
     if (r.motivoCancelacion === undefined) r.motivoCancelacion = "";
     if (r.horaCancelacion === undefined) r.horaCancelacion = "";
     return r;
   }
-
   function calcularEstado(r){
     if (r.cancelado){
       return { code:"CANCELADO", label:"No llegó / Cancelado", color:"#E74C3C" };
@@ -131,7 +126,6 @@
 
     visibles.forEach(({r}) => {
       const est = calcularEstado(r);
-      const tr = document.createElement("tr");
 
       const horas = [
         r.horaLlegada ? `Llegada: ${r.horaLlegada}` : null,
@@ -139,14 +133,15 @@
         r.horaTermino ? `Término: ${r.horaTermino}` : null
       ].filter(Boolean).join(" · ");
 
+      const tr = document.createElement("tr");
       tr.innerHTML = `
         <td>${r.fechaDespacho || ""}</td>
         <td>${r.numeroDespacho || ""}</td>
-        <td><b>${r.contenedor || ""}</b>
-          <div class="small">${r.reserva ? "Reserva: "+r.reserva : ""}</div>
+        <td>
+          <b>${r.transporte || ""}</b>
+          <div class="small">Pallets: ${r.cantidadPallets || "—"} · Carga: ${r.tipoCarga || "—"}</div>
         </td>
         <td>${r.empresa || ""}</td>
-        <td>${(r.nave||"")}${r.naviera ? "<div class='small'>"+r.naviera+"</div>" : ""}</td>
         <td>${r.citacion || ""}</td>
         <td><span class="badge" style="background:${est.color}">${est.label}</span></td>
         <td>${horas || "<span class='small'>—</span>"}</td>
@@ -160,11 +155,7 @@
 
   $("btnRefresh").addEventListener("click", renderTabla);
   $("filtro").addEventListener("input", renderTabla);
-
-  // Si tienes el tablero abierto y editas en otra pestaña, se refresca solo
-  window.addEventListener("storage", (e) => {
-    if (e.key === KEY) renderTabla();
-  });
+  window.addEventListener("storage", (e) => { if (e.key === KEY) renderTabla(); });
 
   renderTabla();
 </script>
