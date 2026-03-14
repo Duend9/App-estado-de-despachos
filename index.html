@@ -1,119 +1,69 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tablero Despachos (TV)</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablero Despachos – TV</title>
 
-  <style>
-    :root{
-      --bg:#0b1220; --card:#101a33; --text:#e9eefc; --muted:#a7b2d6;
-      --line:#22305a; --ok:#2ecc71; --warn:#f7b500; --work:#2d7dff; --bad:#e74c3c;
-    }
+<style>
+:root{
+  --bg:#0b1220; --card:#101a33; --text:#e9eefc; --muted:#a7b2d6;
+  --line:#22305a; --ok:#2ecc71; --warn:#f7b500; --work:#2d7dff; --bad:#e74c3c;
+}
+body{
+  margin:0;
+  font-family:system-ui,Segoe UI,Roboto,Arial;
+  background:linear-gradient(180deg,#070b14,var(--bg));
+  color:var(--text);
+}
+header{
+  background:#0b1220;
+  border-bottom:1px solid var(--line);
+}
+.wrap{max-width:1400px;margin:auto;padding:14px}
+.top{
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr;
+  gap:12px;
+  align-items:center;
+}
+.brand h1{margin:0;font-size:20px}
+.brand p{margin:4px 0 0;color:var(--muted);font-size:13px}
+.clockBox{
+  text-align:center;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:10px;
+}
+.clock{font-size:44px;font-weight:900}
+.date{font-size:14px;color:var(--muted)}
+.summary{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+}
+.kpi{
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:10px;
+  text-align:center;
+}
+.kpi .label{font-size:12px;color:var(--muted)}
+.kpi .value{font-size:28px;font-weight:900}
+.wait{color:var(--warn)}
+.work{color:var(--work)}
+.ok{color:var(--ok)}
+.bad{color:var(--bad)}
 
-    body{
-      margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      background:linear-gradient(180deg,#070b14,var(--bg));
-      color:var(--text);
-    }
+table{width:100%;border-collapse:collapse;margin-top:14px}
+th,td{border-bottom:1px solid var(--line);padding:10px;font-size:14px}
+th{color:var(--muted)}
+.badge{padding:6px 12px;border-radius:999px;font-weight:900;color:white}
 
-    header{
-      position:sticky;
-      top:0;
-      background:rgba(11,18,32,.95);
-      border-bottom:1px solid var(--line);
-      z-index:10;
-    }
-
-    .wrap{max-width:1400px;margin:0 auto;padding:14px}
-
-    .top{
-      display:grid;
-      gap:12px;
-      grid-template-columns: 1fr 1fr 1fr;
-      align-items:center;
-    }
-
-    .brand h1{margin:0;font-size:20px}
-    .brand p{margin:4px 0 0;color:var(--muted);font-size:13px}
-
-    .clockBox{
-      text-align:center;
-      background:#0b1430;
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:10px;
-    }
-    .clock{font-size:40px;font-weight:900}
-    .date{font-size:14px;color:var(--muted)}
-
-    .summary{
-      display:grid;
-      grid-template-columns:repeat(4,1fr);
-      gap:8px;
-    }
-    .kpi{
-      background:#0b1430;
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:10px;
-      text-align:center;
-    }
-    .kpi .label{font-size:12px;color:var(--muted)}
-    .kpi .value{font-size:26px;font-weight:900}
-    .wait{color:var(--warn)}
-    .work{color:var(--work)}
-    .ok{color:var(--ok)}
-    .bad{color:var(--bad)}
-
-    .controls{
-      display:flex;
-      gap:8px;
-      justify-content:flex-end;
-      margin-top:8px;
-    }
-
-    input,button{
-      background:#0b1430;
-      color:var(--text);
-      border:1px solid var(--line);
-      border-radius:10px;
-      padding:8px 10px;
-      font-weight:700;
-    }
-
-    table{
-      width:100%;
-      border-collapse:collapse;
-      margin-top:12px;
-    }
-    th,td{
-      border-bottom:1px solid var(--line);
-      padding:10px;
-      font-size:14px;
-    }
-    th{color:var(--muted)}
-
-    .badge{
-      padding:6px 10px;
-      border-radius:999px;
-      font-weight:900;
-      color:white;
-    }
-
-    /* ===== MODO TV ===== */
-    body.modo-tv .controls,
-    body.modo-tv input,
-    body.modo-tv button{
-      display:none;
-    }
-
-    body.modo-tv .clock{font-size:60px}
-    body.modo-tv .kpi .value{font-size:34px}
-    body.modo-tv th,
-    body.modo-tv td{font-size:18px}
-  </style>
+body.modo-tv .clock{font-size:64px}
+body.modo-tv .kpi .value{font-size:36px}
+body.modo-tv th,body.modo-tv td{font-size:18px}
+</style>
 </head>
 
 <body>
@@ -123,7 +73,7 @@
     <div class="top">
       <div class="brand">
         <h1>🚦 Tablero de Despachos</h1>
-        <p>Solo lectura – Pantalla Planta</p>
+        <p>Modo TV – Solo lectura</p>
       </div>
 
       <div class="clockBox">
@@ -132,16 +82,11 @@
       </div>
 
       <div class="summary">
-        <div class="kpi wait"><div class="label">En espera</div><div class="value" id="kpiEspera">0</div></div>
-        <div class="kpi work"><div class="label">Cargando</div><div class="value" id="kpiCargando">0</div></div>
-        <div class="kpi ok"><div class="label">Despachado</div><div class="value" id="kpiDespachado">0</div></div>
-        <div class="kpi bad"><div class="label">No llegó</div><div class="value" id="kpiCancelado">0</div></div>
+        <div class="kpi wait"><div class="label">En espera</div><div class="value" id="kEspera">0</div></div>
+        <div class="kpi work"><div class="label">Cargando</div><div class="value" id="kCarga">0</div></div>
+        <div class="kpi ok"><div class="label">Despachado</div><div class="value" id="kOk">0</div></div>
+        <div class="kpi bad"><div class="label">No llegó</div><div class="value" id="kBad">0</div></div>
       </div>
-    </div>
-
-    <div class="controls">
-      <input id="filtro" placeholder="Buscar..." />
-      <button id="btnTV">📺 Modo TV</button>
     </div>
   </div>
 </header>
@@ -162,8 +107,55 @@
 </div>
 
 <script>
-  const KEY = "despachos_contenedores_v1";
-  const $ = id => document.getElementById(id);
+const KEY="despachos_contenedores_v1";
+const $=id=>document.getElementById(id);
 
-  function reloj(){
-    const d = new Date();
+function reloj(){
+  const d=new Date();
+  $("clock").textContent=d.toLocaleTimeString("es-CL");
+  $("date").textContent=d.toLocaleDateString("es-CL",{weekday:"long",day:"numeric",month:"long"});
+}
+setInterval(reloj,1000);reloj();
+
+function estado(r){
+  if(r.cancelado)return["No llegó","var(--bad)","BAD"];
+  if(!r.horaLlegada)return["En espera","var(--warn)","WAIT"];
+  if(!r.horaTermino)return["Cargando","var(--work)","WORK"];
+  return["Despachado","var(--ok)","OK"];
+}
+
+function render(){
+  const data=JSON.parse(localStorage.getItem(KEY)||"[]");
+  let w=0,c=0,o=0,b=0;
+  $("tbody").innerHTML="";
+  data.forEach(r=>{
+    const [txt,col,st]=estado(r);
+    if(st==="WAIT")w++; if(st==="WORK")c++; if(st==="OK")o++; if(st==="BAD")b++;
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td>${r.fechaDespacho||""}</td>
+      <td>${r.numeroDespacho||""}</td>
+      <td>${r.transporte||""}</td>
+      <td>${r.empresa||""}</td>
+      <td><span class="badge" style="background:${col}">${txt}</span></td>`;
+    $("tbody").appendChild(tr);
+  });
+  $("kEspera").textContent=w;
+  $("kCarga").textContent=c;
+  $("kOk").textContent=o;
+  $("kBad").textContent=b;
+}
+render();
+setInterval(render,30000);
+
+function activarTV(){
+  document.documentElement.requestFullscreen();
+  document.body.classList.add("modo-tv");
+}
+if(new URLSearchParams(location.search).get("tv")==="1"){
+  setTimeout(activarTV,600);
+}
+</script>
+
+</body>
+</html>
