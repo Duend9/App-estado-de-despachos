@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Edición Despachos Contenedores</title>
+  <title>Edición + Acciones (Despachos)</title>
   <style>
     :root{
       --bg:#0b1220; --card:#101a33; --text:#e9eefc; --muted:#a7b2d6;
@@ -55,16 +55,16 @@
 
 <body>
 <header>
-  <h1>✏️ Edición + Acciones (Despachos de Contenedores)</h1>
-  <p>Desde aquí actualizas estados (Llegó / Iniciar / Terminar / Cancelar / Reactivar). El tablero queda en index.html. [2](https://vecscl-my.sharepoint.com/personal/dennis_hurtado_fresh-pak_cl/Documents/Dennishurtado/Desktop/contenedores/FDI003-HLBU993662-8-Yiannis/Informes%20de%20despacho?web=1)</p>
+  <h1>✏️ Edición + Acciones (Despachos)</h1>
+  <p>Aquí gestionas estados: Llegó / Iniciar / Terminar / No llegó / Reactivar. El tablero está en <b>index.html</b>.</p>
 </header>
 
 <div class="wrap grid">
-  <!-- PANEL IZQUIERDO: LISTA + ACCIONES -->
+  <!-- IZQ: LISTA + ACCIONES -->
   <section class="card">
     <div class="topbar">
       <div class="search">
-        <input id="filtro" placeholder="Buscar para gestionar (contenedor, despacho, chofer, etc.)" />
+        <input id="filtro" placeholder="Buscar (transporte, despacho, empresa, etc.)" />
         <span class="pill" id="count">0</span>
       </div>
       <div class="search">
@@ -79,7 +79,7 @@
           <tr>
             <th>Fecha</th>
             <th>Despacho</th>
-            <th>Contenedor</th>
+            <th>Transporte</th>
             <th>Semáforo</th>
             <th>Acciones</th>
           </tr>
@@ -89,11 +89,11 @@
     </div>
 
     <div class="note">
-      Tip: “Editar” carga el registro al formulario de la derecha. “Cancelar” pide motivo y marca 🔴 No llegó / Cancelado.
+      “Editar” carga el registro al formulario. “Cancelar” pide motivo y marca 🔴 No llegó / Cancelado.
     </div>
   </section>
 
-  <!-- PANEL DERECHO: FORMULARIO -->
+  <!-- DER: FORMULARIO -->
   <section class="card">
     <div class="topbar">
       <h2 style="margin:0;font-size:15px">📋 Formulario (crear / editar)</h2>
@@ -106,123 +106,76 @@
           <label>N° Despacho</label>
           <input id="numeroDespacho" placeholder="Ej: 42" />
         </div>
+
         <div>
           <label>Fecha despacho</label>
           <input id="fechaDespacho" type="date" />
         </div>
+
         <div>
           <label>Empresa / Exportadora</label>
           <input id="empresa" placeholder="Ej: Exportadora..." />
         </div>
 
         <div>
-          <label>N° Contenedor</label>
-          <input id="contenedor" placeholder="Ej: MSDU901260-9" />
-        </div>
-        <div>
-          <label>Naviera</label>
-          <input id="naviera" placeholder="Ej: MSC / MAERSK / HAPAG..." />
-        </div>
-
-        <div>
-          <label>Nave</label>
-          <input id="nave" placeholder="Ej: MSC FREEPORT" />
-        </div>
-        <div>
-          <label>Mercado / Recibidor</label>
-          <input id="recibidor" placeholder="Ej: China / Cliente..." />
-        </div>
-        <div>
           <label>Puerto embarque</label>
           <input id="puertoEmbarque" placeholder="Ej: Valparaíso / San Antonio" />
         </div>
 
         <div>
-          <label>Puerto destino</label>
-          <input id="puertoDestino" placeholder="Ej: Shanghai / Nansha" />
+          <label>Mercado / Recibidor</label>
+          <input id="recibidor" placeholder="Ej: China / Cliente..." />
         </div>
+
+        <div>
+          <label>Fecha/Hora citación planta</label>
+          <input id="citacion" placeholder="Ej: 15-12-2025 18:00" />
+        </div>
+
         <div>
           <label>Especie</label>
           <input id="especie" placeholder="Ej: Manzanas / Cerezas" />
         </div>
+
         <div>
           <label>Variedad (opcional)</label>
           <input id="variedad" placeholder="Ej: Fuji / Santina" />
         </div>
 
+        <!-- NUEVOS CAMPOS -->
         <div>
-          <label>Planta despacho</label>
-          <input id="planta" placeholder="Ej: Fresh Pak" />
-        </div>
-        <div>
-          <label>Fecha/Hora citación planta</label>
-          <input id="citacion" placeholder="Ej: 15-12-2025 18:00" />
-        </div>
-        <div>
-          <label>Sello</label>
-          <input id="sello" placeholder="Ej: CL002147" />
+          <label>Cantidad de pallets</label>
+          <input id="cantidadPallets" type="number" step="1" placeholder="Ej: 20" />
         </div>
 
         <div>
-          <label>Tara (KG)</label>
-          <input id="taraKg" type="number" step="0.01" placeholder="Ej: 4500" />
-        </div>
-        <div>
-          <label>Patente camión</label>
-          <input id="patenteCamion" placeholder="Ej: FHYZ10" />
-        </div>
-        <div>
-          <label>Patente carro</label>
-          <input id="patenteCarro" placeholder="Ej: JWLW25" />
+          <label>Tipo de carga</label>
+          <input id="tipoCarga" placeholder="Ej: 40'RHC / 20' / Mix / etc." />
         </div>
 
         <div>
-          <label>RUT chofer</label>
-          <input id="rutChofer" placeholder="Ej: 14539339-6" />
-        </div>
-        <div>
-          <label>Nombre chofer</label>
-          <input id="nombreChofer" placeholder="Ej: Raúl Gómez Lara" />
-        </div>
-        <div>
-          <label>Móvil chofer</label>
-          <input id="movilChofer" placeholder="Ej: 9XXXXXXXX" />
+          <label>Transporte</label>
+          <input id="transporte" placeholder="Ej: Transportes Muñoz / X empresa" />
         </div>
 
         <div>
           <label>Hora llegada (HH:MM)</label>
           <input id="horaLlegada" type="time" />
         </div>
+
         <div>
           <label>Hora inicio carga (HH:MM)</label>
           <input id="horaInicioCarga" type="time" />
         </div>
+
         <div>
           <label>Hora término carga (HH:MM)</label>
           <input id="horaTermino" type="time" />
         </div>
 
-        <div>
-          <label>Set point (opcional)</label>
-          <input id="setPoint" placeholder="Ej: -0.5" />
-        </div>
-        <div>
-          <label>Ventilación (opcional)</label>
-          <input id="ventilacion" placeholder="Ej: 15 CBM" />
-        </div>
-        <div>
-          <label>Termógrafo 1 (opcional)</label>
-          <input id="termografo1" placeholder="Folio / N°" />
-        </div>
-
-        <div>
-          <label>Termógrafo 2 (opcional)</label>
-          <input id="termografo2" placeholder="Folio / N°" />
-        </div>
-
         <div style="grid-column:1/-1">
           <label>Observaciones</label>
-          <textarea id="observaciones" placeholder="Notas relevantes (temperaturas, incidentes, etc.)"></textarea>
+          <textarea id="observaciones" placeholder="Notas relevantes"></textarea>
         </div>
       </div>
 
@@ -231,6 +184,7 @@
         <button type="button" id="btnNuevo">🧹 Nuevo</button>
         <button class="danger" type="button" id="btnBorrarTodo">🗑️ Borrar todo</button>
       </div>
+
       <div class="note" id="estadoActual">Estado: —</div>
     </form>
   </section>
@@ -238,10 +192,10 @@
 
 <script>
   const KEY = "despachos_contenedores_v1";
-  let despachos = cargar();
-  let editIndex = null;
-
   const $ = (id) => document.getElementById(id);
+
+  let despachos = cargar().map(normalizar);
+  let editIndex = null;
 
   function cargar(){
     try { return JSON.parse(localStorage.getItem(KEY)) || []; }
@@ -249,7 +203,7 @@
   }
   function guardar(){
     localStorage.setItem(KEY, JSON.stringify(despachos));
-    $("count").textContent = `${despachos.length} registro(s)`;
+    $("count").textContent = `${despachos.length} total`;
   }
   function ahoraHHMM(){
     const d = new Date();
@@ -277,13 +231,14 @@
     return { code:"DESPACHADO", label:"Despachado", color:"#2ECC71" };
   }
 
-  // ===== Form <-> Objeto =====
   const campos = [
-    "numeroDespacho","fechaDespacho","empresa","reserva","contenedor","naviera","nave","recibidor",
-    "puertoEmbarque","puertoDestino","especie","variedad","planta","citacion","sello","taraKg",
-    "patenteCamion","patenteCarro","rutChofer","nombreChofer","movilChofer",
+    "numeroDespacho","fechaDespacho","empresa",
+    "recibidor","puertoEmbarque",
+    "especie","variedad",
+    "citacion",
+    "cantidadPallets","tipoCarga","transporte",
     "horaLlegada","horaInicioCarga","horaTermino",
-    "setPoint","ventilacion","termografo1","termografo2","observaciones"
+    "observaciones"
   ];
 
   function leerForm(){
@@ -303,7 +258,7 @@
     $("estadoActual").textContent = "Estado: —";
   }
 
-  // ===== Acciones (se ejecutan aquí en edición) =====
+  // Acciones aquí (edición)
   function marcarLlegada(i){
     despachos[i].cancelado = false;
     despachos[i].horaLlegada = despachos[i].horaLlegada || ahoraHHMM();
@@ -352,9 +307,10 @@
     if (editIndex === i) limpiarForm();
   }
 
-  // ===== Render tabla (con acciones) =====
   function renderTabla(){
+    // recarga desde storage por si hubo cambios en otra pestaña
     despachos = cargar().map(normalizar);
+
     const q = ($("filtro").value || "").toLowerCase();
     const tbody = document.querySelector("#tabla tbody");
     tbody.innerHTML = "";
@@ -371,7 +327,10 @@
       tr.innerHTML = `
         <td>${r.fechaDespacho || ""}</td>
         <td>${r.numeroDespacho || ""}</td>
-        <td><b>${r.contenedor || ""}</b><div class="small">${r.reserva ? "Reserva: "+r.reserva : ""}</div></td>
+        <td>
+          <b>${r.transporte || ""}</b>
+          <div class="small">Pallets: ${r.cantidadPallets || "—"} · Carga: ${r.tipoCarga || "—"}</div>
+        </td>
         <td>
           <span class="badge" style="background:${est.color}">${est.label}</span>
           ${r.cancelado ? `<div class="small">Motivo: ${r.motivoCancelacion || "—"}${r.horaCancelacion ? " ("+r.horaCancelacion+")" : ""}</div>` : ""}
@@ -391,20 +350,17 @@
       tbody.appendChild(tr);
     });
 
-    // Si estabas editando, re-sincroniza el objeto editado
-    if (editIndex !== null && despachos[editIndex]) {
-      cargarForm(despachos[editIndex]);
-    }
+    if (editIndex !== null && despachos[editIndex]) cargarForm(despachos[editIndex]);
   }
 
-  // ===== Export CSV =====
   function exportarCSV(){
     const header = [
-      "numeroDespacho","fechaDespacho","empresa","reserva","contenedor","naviera","nave","recibidor",
-      "puertoEmbarque","puertoDestino","especie","variedad","planta","citacion","sello","taraKg",
-      "patenteCamion","patenteCarro","rutChofer","nombreChofer","movilChofer",
+      "numeroDespacho","fechaDespacho","empresa",
+      "recibidor","puertoEmbarque",
+      "especie","variedad","citacion",
+      "cantidadPallets","tipoCarga","transporte",
       "horaLlegada","horaInicioCarga","horaTermino",
-      "setPoint","ventilacion","termografo1","termografo2","observaciones",
+      "observaciones",
       "estado","motivoCancelacion","horaCancelacion","id"
     ];
 
@@ -429,43 +385,18 @@
     URL.revokeObjectURL(url);
   }
 
-  // ===== Eventos =====
   $("form").addEventListener("submit", (e) => {
     e.preventDefault();
     let r = leerForm();
 
     if (editIndex !== null){
-      // conserva flags si existían
       const prev = normalizar(despachos[editIndex]);
       r.id = prev.id;
       r.cancelado = prev.cancelado;
       r.motivoCancelacion = prev.motivoCancelacion;
       r.horaCancelacion = prev.horaCancelacion;
-
       despachos[editIndex] = r;
       $("statusHint").textContent = "Guardado (edición)";
     } else {
-      // nuevo: lo ponemos arriba
       despachos.unshift(r);
       $("statusHint").textContent = "Guardado (nuevo)";
-    }
-
-    guardar();
-    renderTabla();
-    limpiarForm();
-  });
-
-  $("btnNuevo").addEventListener("click", limpiarForm);
-  $("btnExport").addEventListener("click", exportarCSV);
-  $("btnBorrarTodo").addEventListener("click", () => {
-    if (!confirm("¿Borrar TODOS los registros?")) return;
-    despachos = [];
-    guardar(); renderTabla(); limpiarForm();
-  });
-  $("filtro").addEventListener("input", renderTabla);
-
-  // Init
-  renderTabla();
-</script>
-</body>
-</html>
