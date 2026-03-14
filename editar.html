@@ -3,57 +3,278 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Editar – Prueba mínima</title>
+  <title>Edición de Despachos</title>
+
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0b1220;
-      color: #ffffff;
-      padding: 40px;
+    :root{
+      --bg:#0b1220; --card:#101a33; --text:#e9eefc; --muted:#a7b2d6;
+      --line:#22305a; --ok:#2ecc71; --warn:#f7b500; --work:#2d7dff; --bad:#e74c3c;
     }
-    button {
-      padding: 12px 18px;
-      font-size: 16px;
-      cursor: pointer;
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: linear-gradient(180deg,#070b14,var(--bg));
+      color: var(--text);
     }
-    .ok {
-      color: #2ecc71;
-      font-weight: bold;
-      margin-top: 20px;
+    header{
+      padding:16px 18px;
+      position:sticky; top:0;
+      background:rgba(11,18,32,.92);
+      backdrop-filter: blur(6px);
+      border-bottom:1px solid var(--line);
+      z-index:10;
+    }
+    header h1{margin:0;font-size:18px}
+    header p{margin:6px 0 0;color:var(--muted);font-size:13px}
+
+    .wrap{max-width:1200px;margin:0 auto;padding:16px}
+    .grid{display:grid;gap:12px;min-height:70vh;}
+    @media(min-width:980px){.grid{grid-template-columns:1.15fr .85fr}}
+
+    .card{
+      background:rgba(16,26,51,.92);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:14px;
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+
+    .pill{
+      display:inline-block;
+      padding:3px 8px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+    }
+    .pill.ok{color:#b9ffd6;border-color:#2ecc71}
+    .pill.bad{color:#ffd0d0;border-color:#e74c3c}
+
+    table{width:100%;border-collapse:collapse}
+    th,td{
+      border-bottom:1px solid var(--line);
+      padding:10px 8px;
+      text-align:left;
+      font-size:13px;
+      vertical-align:top;
+    }
+    th{
+      color:var(--muted);
+      font-weight:900;
+      position:sticky;
+      top:70px;
+      background:rgba(16,26,51,.96);
+    }
+
+    .badge{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      color:#fff;
+      font-weight:900;
+      font-size:12px;
+    }
+    .tools{display:flex;gap:6px;flex-wrap:wrap}
+    .tools button{padding:6px 10px;font-size:12px}
+
+    input,textarea{
+      width:100%;
+      padding:10px;
+      background:#0b1430;
+      color:var(--text);
+      border:1px solid var(--line);
+      border-radius:10px;
+      box-sizing:border-box;
+    }
+    textarea{min-height:90px}
+
+    button{
+      border:1px solid var(--line);
+      background:#0b1430;
+      color:#fff;
+      padding:10px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      font-weight:900;
+    }
+    button.primary{background:#2d7dff}
+    button.good{background:#2ecc71}
+    button.danger{background:#e74c3c}
+
+    .actions{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+
+    .toast{
+      position:fixed;
+      right:16px;
+      bottom:16px;
+      background:#0b1430;
+      border:1px solid var(--line);
+      padding:12px 14px;
+      border-radius:14px;
+      display:none;
+      z-index:9999;
     }
   </style>
 </head>
 
 <body>
 
-  <h1>✅ editar.html – Prueba mínima</h1>
+<header>
+  <h1>✏️ Edición de Despachos</h1>
+  <p>Registro por etapas: Llegó → Inicio carga → Término</p>
+</header>
 
-  <p>Si ves este texto y el botón funciona, GitHub Pages está OK.</p>
+<div class="wrap grid">
 
-  <button id="btn">Guardar prueba</button>
+  <!-- TABLA -->
+  <section class="card">
+    <div class="topbar">
+      <input id="filtro" placeholder="Buscar...">
+      <span class="pill" id="count">0</span>
+      <a href="index.html" class="pill">🚦 Tablero</a>
+    </div>
 
-  <div id="msg" class="ok"></div>
+    <table id="tabla">
+      <thead>
+        <tr>
+          <th>Despacho</th>
+          <th>Transporte</th>
+          <th>Estado</th>
+          <th>⏱ Tiempo</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
 
-  <script>
-    // Forzar HTTPS en GitHub Pages
-    if (location.hostname.endsWith("github.io") && location.protocol === "http:") {
-      location.replace("https://" + location.host + location.pathname);
-    }
+  <!-- FORM -->
+  <section class="card">
+    <h3>📋 Formulario</h3>
 
-    const KEY = "prueba_gitpages_ok";
+    <form id="form">
+      <label>N° Despacho</label>
+      <input id="numeroDespacho">
 
-    document.getElementById("btn").addEventListener("click", () => {
-      localStorage.setItem(KEY, "FUNCIONA");
-      document.getElementById("msg").textContent =
-        "✅ JavaScript OK – localStorage guardó correctamente";
+      <label>Transporte</label>
+      <input id="transporte">
+
+      <label>Hora llegada</label>
+      <input id="horaLlegada" type="time">
+
+      <label>Hora inicio carga</label>
+      <input id="horaInicioCarga" type="time">
+
+      <label>Hora término carga</label>
+      <input id="horaTermino" type="time">
+
+      <label>Observaciones</label>
+      <textarea id="observaciones"></textarea>
+
+      <div class="actions">
+        <button class="primary" type="submit">💾 Guardar</button>
+        <button type="button" id="btnNuevo">🧹 Nuevo</button>
+      </div>
+    </form>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const KEY = "despachos_contenedores_v1";
+  const $ = id => document.getElementById(id);
+
+  let despachos = JSON.parse(localStorage.getItem(KEY) || "[]");
+  let editIndex = null;
+
+  function guardar(){
+    localStorage.setItem(KEY, JSON.stringify(despachos));
+  }
+
+  function estado(r){
+    if (r.horaTermino) return {t:"Despachado",c:"#2ecc71"};
+    if (r.horaLlegada) return {t:"Cargando",c:"#2d7dff"};
+    return {t:"En espera",c:"#f7b500"};
+  }
+
+  function ahora(){
+    return new Date().toTimeString().slice(0,5);
+  }
+
+  function render(){
+    const tbody = document.querySelector("#tabla tbody");
+    tbody.innerHTML = "";
+    $("count").textContent = despachos.length;
+
+    despachos.forEach((r,i)=>{
+      const e = estado(r);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.numeroDespacho||""}</td>
+        <td>${r.transporte||""}</td>
+        <td><span class="badge" style="background:${e.c}">${e.t}</span></td>
+        <td>${r.horaTermino||r.horaInicioCarga||r.horaLlegada||"—"}</td>
+        <td class="tools">
+          <button class="good" onclick="llego(${i})">Llegó</button>
+          <button onclick="inicio(${i})">Iniciar</button>
+          <button onclick="termino(${i})">Terminar</button>
+          <button onclick="editar(${i})">Editar</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
     });
+  }
 
-    // Comprobación al cargar
-    if (localStorage.getItem(KEY)) {
-      document.getElementById("msg").textContent =
-        "✅ localStorage ya tenía datos guardados";
-    }
-  </script>
+  window.llego = i => {
+    despachos[i].horaLlegada ||= ahora();
+    guardar(); render();
+  };
+  window.inicio = i => {
+    despachos[i].horaInicioCarga ||= ahora();
+    guardar(); render();
+  };
+  window.termino = i => {
+    despachos[i].horaTermino ||= ahora();
+    guardar(); render();
+  };
+  window.editar = i => {
+    editIndex = i;
+    Object.keys(despachos[i]).forEach(k=>{
+      if($(k)) $(k).value = despachos[i][k];
+    });
+  };
+
+  $("form").onsubmit = e => {
+    e.preventDefault();
+    const r = {
+      numeroDespacho: $("numeroDespacho").value,
+      transporte: $("transporte").value,
+      horaLlegada: $("horaLlegada").value,
+      horaInicioCarga: $("horaInicioCarga").value,
+      horaTermino: $("horaTermino").value,
+      observaciones: $("observaciones").value
+    };
+    if(editIndex!==null){
+      despachos[editIndex]=r;
+      editIndex=null;
+    } else despachos.unshift(r);
+    guardar(); render(); $("form").reset();
+  };
+
+  $("btnNuevo").onclick = ()=>{$("form").reset();editIndex=null};
+
+  render();
+</script>
 
 </body>
 </html>
