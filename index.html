@@ -1,1 +1,137 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>🚦 Tablero de Despachos (Sheets)</title>
+  <style>
+    :root{--bg:#0b1220;--card:#101a33;--text:#e9eefc;--muted:#a7b2d6;--line:#22305a;--ok:#2ecc71;--warn:#f7b500;--work:#2d7dff;--bad:#e74c3c;}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#070b14,var(--bg));color:var(--text);}
+    header{padding:16px 18px;position:sticky;top:0;background:rgba(11,18,32,.95);backdrop-filter: blur(6px);border-bottom:1px solid var(--line);z-index:10;}
+    .wrap{max-width:1500px;margin:0 auto;padding:14px}
+    .top{display:grid;gap:12px;align-items:center}
+    @media(min-width:980px){.top{grid-template-columns:1.3fr 1fr 1.7fr}}
+    .clockBox{background:#0b1430;border:1px solid var(--line);border-radius:14px;padding:12px;text-align:center}
+    .clock{font-size:46px;font-weight:900} .date{margin-top:4px;font-size:14px;color:var(--muted)}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    .kpi{background:#0b1430;border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
+    .kpi .label{font-size:12px;color:var(--muted);font-weight:800}
+    .kpi .value{font-size:26px;font-weight:900;margin-top:4px}
+    .wait{color:var(--warn)} .work{color:var(--work)} .ok{color:var(--ok)} .bad{color:var(--bad)}
+    .card{background:rgba(16,26,51,.92);border:1px solid var(--line);border-radius:14px;padding:14px}
+    table{width:100%;border-collapse:collapse}
+    th,td{border-bottom:1px solid var(--line);padding:10px 8px;font-size:15px;text-align:left;vertical-align:top}
+    thead th{position:sticky;top:0;background:rgba(16,26,51,.98);color:var(--muted);font-weight:900}
+    .badge{display:inline-block;padding:6px 12px;border-radius:999px;color:#fff;font-weight:900;font-size:13px}
+    .small{font-size:12px;color:var(--muted)}
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap top">
+    <div>
+      <h1 style="margin:0;font-size:22px">🚦 Tablero de Despachos</h1>
+      <p style="margin:6px 0 0;color:var(--muted);font-size:13px">Datos desde Google Sheets (multiusuario)</p>
+    </div>
 
+    <div class="clockBox">
+      <div class="clock" id="clock">--:--:--</div>
+      <div class="date" id="date">—</div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="label">🟡 En espera</div><div class="value wait" id="k1">0</div></div>
+      <div class="kpi"><div class="label">🔵 Cargando</div><div class="value work" id="k2">0</div></div>
+      <div class="kpi"><div class="label">🟢 Despachado</div><div class="value ok" id="k3">0</div></div>
+      <div class="kpi"><div class="label">🔴 No llegó</div><div class="value bad" id="k4">0</div></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="card">
+    <div style="overflow:auto;max-height:72vh">
+      <table>
+        <thead>
+          <tr>
+            <th>Despacho</th>
+            <th>Exportadora / Movimiento</th>
+            <th>Variedad / Mercado</th>
+            <th>Transporte</th>
+            <th>Pallets / Citación</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+  const API_URL = "https://script.google.com/macros/s/AKfycbwj5pxE2ui8O9GEseGX74aktU2EiwDRYxXQbrCTo5uTn8wXbc55p4J5-p0-cJPqarWAJw/exec";
+  const SECRET  = "FP2026DESPACHOS";
+  const $ = id => document.getElementById(id);
+
+  function tickClock(){
+    const d=new Date();
+    $("clock").textContent=d.toLocaleTimeString("es-CL");
+    $("date").textContent=d.toLocaleDateString("es-CL",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
+  }
+  setInterval(tickClock,1000); tickClock();
+
+  function estado(r){
+    if(String(r.cancelado).toLowerCase()==="true") return {t:"No llegó",c:"#e74c3c",k:4};
+    if(!r.horaLlegada) return {t:"En espera",c:"#f7b500",k:1};
+    if(!r.horaTermino) return {t:"Cargando",c:"#2d7dff",k:2};
+    return {t:"Despachado",c:"#2ecc71",k:3};
+  }
+
+  function loadRows(){
+    return new Promise((resolve,reject)=>{
+      const cb="__cb_"+Date.now();
+      window[cb]=(data)=>{
+        try{
+          if(data && data.ok && Array.isArray(data.rows)) resolve(data.rows);
+          else reject(data && data.error ? data.error : "Respuesta inválida");
+        } finally {
+          delete window[cb];
+        }
+      };
+      const s=document.createElement("script");
+      s.src=`${API_URL}?secret=${encodeURIComponent(SECRET)}&callback=${encodeURIComponent(cb)}&_=${Date.now()}`;
+      s.onerror=()=>{ delete window[cb]; reject("Error cargando datos"); };
+      document.body.appendChild(s);
+      setTimeout(()=>{ try{s.remove();}catch(e){} }, 5000);
+    });
+  }
+
+  async function render(){
+    const rows = await loadRows();
+    let a=0,b=0,c=0,d=0;
+    const tbody=$("tbody");
+    tbody.innerHTML="";
+
+    rows.forEach(r=>{
+      const e=estado(r);
+      if(e.k===1)a++; if(e.k===2)b++; if(e.k===3)c++; if(e.k===4)d++;
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+        <td><b>${r.numeroDespacho||""}</b></td>
+        <td><b>${r.exportadora||""}</b><div class="small">${r.tipoMovimiento||""}</div></td>
+        <td><b>${r.variedad||""}</b><div class="small">${r.mercado||""}</div></td>
+        <td>${r.transporte||""}</td>
+        <td><b>${r.cantidadPallets||"—"}</b><div class="small">${r.horaCitacion||"—"}</div></td>
+        <td><span class="badge" style="background:${e.c}">${e.t}</span></td>`;
+      tbody.appendChild(tr);
+    });
+
+    $("k1").textContent=a; $("k2").textContent=b; $("k3").textContent=c; $("k4").textContent=d;
+  }
+
+  render();
+  setInterval(render, 30000);
+</script>
+</body>
+</html>
+``
