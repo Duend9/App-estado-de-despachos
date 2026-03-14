@@ -222,9 +222,9 @@
       const tr=document.createElement("tr");
       if(e.k==="work" && mins>=LIMITE_ALERTA) tr.classList.add("alerta");
       tr.innerHTML=`
+        <td>${r.tipoMovimiento||""}</td>
         <td><b>${r.numeroDespacho||""}</b></td>
         <td>${r.exportadora||""}</td>
-        <td>${r.tipoMovimiento||""}</td>
         <td><b>${r.variedad||""}</b><div class="small">${r.mercado||""}</div></td>
         <td>${r.transporte||""}</td>
         <td><b>${r.cantidadPallets||"—"}</b><div class="small">${r.horaCitacion||"—"}</div></td>
