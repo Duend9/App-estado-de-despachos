@@ -3,86 +3,199 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tablero Despachos (Solo lectura)</title>
+  <title>Tablero Despachos (TV)</title>
   <style>
     :root{
       --bg:#0b1220; --card:#101a33; --text:#e9eefc; --muted:#a7b2d6;
       --line:#22305a; --ok:#2ecc71; --warn:#f7b500; --work:#2d7dff; --bad:#e74c3c;
     }
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; background:linear-gradient(180deg,#070b14,var(--bg)); color:var(--text);}
-    header{padding:18px; position:sticky; top:0; background:rgba(11,18,32,.92); backdrop-filter: blur(6px); border-bottom:1px solid var(--line); z-index:10;}
-    header h1{margin:0;font-size:18px}
-    header p{margin:6px 0 0;color:var(--muted);font-size:13px}
-    .wrap{max-width:1200px;margin:0 auto;padding:16px}
-    .card{background:rgba(16,26,51,.92); border:1px solid var(--line); border-radius:14px; padding:14px}
-    .topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-    .pill{display:inline-block;padding:3px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:12px}
-    .search{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    input{
-      background:#0b1430;color:var(--text);border:1px solid var(--line);border-radius:10px;
-      padding:10px 10px; outline:none; min-width:260px;
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:linear-gradient(180deg,#070b14,var(--bg));
+      color:var(--text);
     }
-    a.btn{
-      display:inline-block; text-decoration:none; font-weight:900; color:var(--text);
-      background:#0b1430; border:1px solid var(--line); padding:10px 12px; border-radius:10px;
+    header{
+      padding:16px 18px 12px;
+      position:sticky; top:0;
+      background:rgba(11,18,32,.92);
+      backdrop-filter: blur(6px);
+      border-bottom:1px solid var(--line);
+      z-index:10;
+    }
+    .wrap{max-width:1400px;margin:0 auto;padding:14px}
+    .card{
+      background:rgba(16,26,51,.92);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:14px;
+    }
+
+    /* ====== Barra superior: reloj + resumen + controles ====== */
+    .topgrid{
+      display:grid;
+      gap:10px;
+      align-items:center;
+    }
+    @media(min-width:980px){
+      .topgrid{grid-template-columns: 1.1fr 1.4fr 1fr;}
+    }
+
+    .brand h1{margin:0;font-size:18px}
+    .brand p{margin:6px 0 0;color:var(--muted);font-size:13px}
+
+    .clockBox{
+      display:flex; flex-direction:column; align-items:flex-start; justify-content:center;
+      border:1px solid var(--line); border-radius:14px; padding:12px 14px;
+      background:#0b1430;
+    }
+    .clock{
+      font-size:34px;
+      font-weight:900;
+      letter-spacing:1px;
+      line-height:1.05;
+    }
+    .date{
+      margin-top:4px;
+      color:var(--muted);
+      font-size:14px;
+      font-weight:700;
+    }
+
+    .summary{
+      display:grid; gap:8px;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+    }
+    .kpi{
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:10px 12px;
+      background:#0b1430;
+      min-width:120px;
+    }
+    .kpi .label{color:var(--muted); font-size:12px; font-weight:800}
+    .kpi .value{font-size:22px; font-weight:950; margin-top:4px}
+    .kpi.wait .value{color:var(--warn)}
+    .kpi.work .value{color:var(--work)}
+    .kpi.ok .value{color:var(--ok)}
+    .kpi.bad .value{color:var(--bad)}
+
+    .controls{
+      display:flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap:wrap;
+    }
+    .pill{
+      display:inline-block; padding:3px 8px;
+      border:1px solid var(--line); border-radius:999px;
+      color:var(--muted); font-size:12px; font-weight:800;
+    }
+    input{
+      background:#0b1430;color:var(--text);
+      border:1px solid var(--line);border-radius:10px;
+      padding:10px 10px; outline:none; min-width:240px;
     }
     button{
       border:1px solid var(--line); background:#0b1430; color:var(--text);
       padding:10px 12px; border-radius:10px; cursor:pointer; font-weight:900;
     }
+    button.primary{
+      background:linear-gradient(180deg,#2d7dff,#1f5ed4);
+      border-color:#1f5ed4;
+    }
+
+    /* ====== Tabla ====== */
     table{width:100%; border-collapse:collapse}
-    th, td{border-bottom:1px solid var(--line); padding:10px 8px; text-align:left; vertical-align:top; font-size:13px}
-    th{color:var(--muted); font-weight:900; position:sticky; top:74px; background:rgba(16,26,51,.96)}
-    .badge{display:inline-block;padding:6px 10px;border-radius:999px;color:white;font-weight:900;font-size:12px;white-space:nowrap}
+    th, td{
+      border-bottom:1px solid var(--line);
+      padding:10px 8px;
+      text-align:left;
+      vertical-align:top;
+      font-size:13px;
+    }
+    th{
+      color:var(--muted);
+      font-weight:900;
+      position:sticky;
+      top:190px; /* se ajusta para header alto */
+      background:rgba(16,26,51,.96);
+    }
+    .badge{
+      display:inline-block;padding:6px 10px;border-radius:999px;
+      color:white;font-weight:950;font-size:12px;white-space:nowrap
+    }
     .small{font-size:12px;color:var(--muted);margin-top:4px}
     .note{color:var(--muted); font-size:12px; margin-top:10px}
+
+    /* ====== MODO TV ====== */
+    body.modo-tv .controls input,
+    body.modo-tv .controls button,
+    body.modo-tv .note{
+      display:none;
+    }
+    body.modo-tv header{
+      padding:18px 18px 14px;
+    }
+    body.modo-tv .brand h1{font-size:22px}
+    body.modo-tv .clock{font-size:54px}
+    body.modo-tv .date{font-size:18px}
+    body.modo-tv .kpi .value{font-size:30px}
+    body.modo-tv th, body.modo-tv td{font-size:18px}
+    body.modo-tv .badge{font-size:16px; padding:10px 16px}
+    body.modo-tv th{top:210px;} /* un poco más por reloj grande */
   </style>
-/* ===== MODO TV ===== */
-body.modo-tv header h1 {
-  font-size: 28px;
-}
-
-body.modo-tv th,
-body.modo-tv td {
-  font-size: 18px;
-}
-
-body.modo-tv .badge {
-  font-size: 16px;
-  padding: 10px 16px;
-}
-
-body.modo-tv input,
-body.modo-tv button {
-  display: none; /* oculta controles en TV */
-}
-
-body.modo-tv .note {
-  display: none;
-}  
 </head>
 
 <body>
 <header>
-  <h1>🚦 Tablero de Despachos (Solo lectura)</h1>
-  <p>Semáforo: 🟡 En espera · 🔵 Cargando · 🟢 Despachado · 🔴 No llegó / Cancelado</p>
+  <div class="wrap">
+    <div class="topgrid">
+      <!-- Marca / título -->
+      <div class="brand">
+        <h1>🚦 Tablero de Despachos (Solo lectura)</h1>
+        <p>Semáforo: 🟡 En espera · 🔵 Cargando · 🟢 Despachado · 🔴 No llegó / Cancelado</p>
+      </div>
+
+      <!-- Reloj grande -->
+      <div class="clockBox">
+        <div class="clock" id="clock">--:--:--</div>
+        <div class="date" id="date">—</div>
+      </div>
+
+      <!-- Controles -->
+      <div class="controls">
+        <input id="filtro" placeholder="Buscar (transporte, despacho, empresa, etc.)" />
+        <span class="pill" id="count">0</span>
+        <span class="pill" id="last">—</span>
+        <button id="btnTV" class="primary">📺 Modo TV</button>
+        <button id="btnRefresh">🔄 Actualizar</button>
+      </div>
+    </div>
+
+    <!-- Resumen arriba -->
+    <div style="margin-top:10px">
+      <div class="summary">
+        <div class="kpi wait">
+          <div class="label">🟡 En espera</div>
+          <div class="value" id="kpiEspera">0</div>
+        </div>
+        <div class="kpi work">
+          <div class="label">🔵 Cargando</div>
+          <div class="value" id="kpiCargando">0</div>
+        </div>
+        <div class="kpi ok">
+          <div class="label">🟢 Despachado</div>
+          <div class="value" id="kpiDespachado">0</div>
+        </div>
+        <div class="kpi bad">
+          <div class="label">🔴 No llegó</div>
+          <div class="value" id="kpiCancelado">0</div>
+        </div>
+      </div>
+    </div>
+  </div>
 </header>
 
 <div class="wrap">
   <section class="card">
-    <div class="topbar">
-      <div class="search">
-        <input id="filtro" placeholder="Buscar (transporte, despacho, empresa, etc.)" />
-        <span class="pill" id="count">0</span>
-      </div>
-      <div class="search">
-        <a class="btn" href="editar.html">✏️ Ir a Edición</a>
-        <button id="btnTV">📺 Modo TV</button>
-        <button id="btnRefresh">🔄 Actualizar</button>
-        <span class="pill" id="last">—</span>
-      </div>
-    </div>
-
     <div style="overflow:auto; max-height:72vh; border-radius:12px">
       <table id="tabla">
         <thead>
@@ -102,15 +215,27 @@ body.modo-tv .note {
     </div>
 
     <div class="note">
-      Este tablero no tiene acciones. Para actualizar estados usa <b>editar.html</b>.
+      Este tablero es solo lectura. Los cambios de estado se hacen en <b>editar.html</b>.
     </div>
   </section>
 </div>
 
 <script>
+  // ===== Datos compartidos con editar.html =====
   const KEY = "despachos_contenedores_v1";
   const $ = (id) => document.getElementById(id);
 
+  // ===== Reloj grande =====
+  function pad(n){ return String(n).padStart(2,"0"); }
+  function tickClock(){
+    const d = new Date();
+    $("clock").textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    $("date").textContent = d.toLocaleDateString("es-CL", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+  }
+  setInterval(tickClock, 1000);
+  tickClock();
+
+  // ===== Helpers storage =====
   function cargar(){
     try { return JSON.parse(localStorage.getItem(KEY)) || []; }
     catch(e){ return []; }
@@ -122,6 +247,8 @@ body.modo-tv .note {
     if (r.horaCancelacion === undefined) r.horaCancelacion = "";
     return r;
   }
+
+  // ===== Semáforo =====
   function calcularEstado(r){
     if (r.cancelado){
       return { code:"CANCELADO", label:"No llegó / Cancelado", color:"#E74C3C" };
@@ -135,6 +262,7 @@ body.modo-tv .note {
     return { code:"DESPACHADO", label:"Despachado", color:"#2ECC71" };
   }
 
+  // ===== Render tabla + resumen =====
   function renderTabla(){
     const despachos = cargar().map(normalizar);
     const q = ($("filtro").value || "").toLowerCase();
@@ -142,13 +270,29 @@ body.modo-tv .note {
     tbody.innerHTML = "";
 
     const visibles = despachos
-      .map((r, idx) => ({r, idx}))
-      .filter(x => !q || JSON.stringify(x.r).toLowerCase().includes(q));
+      .map((r) => r)
+      .filter(r => !q || JSON.stringify(r).toLowerCase().includes(q));
+
+    // KPIs (sobre visibles)
+    let cEspera=0, cCargando=0, cDespachado=0, cCancelado=0;
+    visibles.forEach(r=>{
+      const e = calcularEstado(r).code;
+      if (e==="ESPERA") cEspera++;
+      else if (e==="CARGANDO") cCargando++;
+      else if (e==="DESPACHADO") cDespachado++;
+      else if (e==="CANCELADO") cCancelado++;
+    });
+
+    $("kpiEspera").textContent = cEspera;
+    $("kpiCargando").textContent = cCargando;
+    $("kpiDespachado").textContent = cDespachado;
+    $("kpiCancelado").textContent = cCancelado;
 
     $("count").textContent = `${despachos.length} total · ${visibles.length} visibles`;
-    $("last").textContent = `Actualizado: ${new Date().toLocaleString()}`;
+    $("last").textContent = `Actualizado: ${new Date().toLocaleTimeString("es-CL")}`;
 
-    visibles.forEach(({r}) => {
+    // filas
+    visibles.forEach((r) => {
       const est = calcularEstado(r);
 
       const horas = [
@@ -169,7 +313,8 @@ body.modo-tv .note {
         <td>${r.citacion || ""}</td>
         <td><span class="badge" style="background:${est.color}">${est.label}</span></td>
         <td>${horas || "<span class='small'>—</span>"}</td>
-        <td>${r.cancelado ? (r.motivoCancelacion || "—") : "<span class='small'>—</span>"}
+        <td>
+          ${r.cancelado ? (r.motivoCancelacion || "—") : "<span class='small'>—</span>"}
           ${r.cancelado && r.horaCancelacion ? "<div class='small'>Hora: "+r.horaCancelacion+"</div>" : ""}
         </td>
       `;
@@ -177,42 +322,43 @@ body.modo-tv .note {
     });
   }
 
+  // ===== Eventos =====
   $("btnRefresh").addEventListener("click", renderTabla);
   $("filtro").addEventListener("input", renderTabla);
-  window.addEventListener("storage", (e) => { if (e.key === KEY) renderTabla(); });
 
-  renderTabla();
+  // Si editas en otra pestaña, refresca inmediato
+  window.addEventListener("storage", (e) => {
+    if (e.key === KEY) renderTabla();
+  });
+
   // ===== MODO TV =====
-let tvInterval = null;
-const TV_REFRESH_MS = 30000; // 30 segundos
+  let tvInterval = null;
+  const TV_REFRESH_MS = 30000; // 30s  [1](https://outlook.office365.com/owa/?ItemID=AAMkADExZTczYmMxLWJiY2ItNDdmOS05Nzg0LTA1YmVlZDNjMmUzMQBGAAAAAAB6NYogvdPlSbeQvdo0Qe9vBwDYB7yqIBEZRoNQ2NWSMh%2btAAAVCTQXAADYB7yqIBEZRoNQ2NWSMh%2btAAFcgCDMAAA%3d&exvsurl=1&viewmodel=ReadMessageItem)
 
-function activarModoTV() {
-  // 1) Pantalla completa
-  const el = document.documentElement;
-  if (el.requestFullscreen) {
-    el.requestFullscreen();
-  }
+  function activarModoTV(){
+    // Pantalla completa (Fullscreen API) [2](https://vecscl-my.sharepoint.com/personal/dennis_hurtado_fresh-pak_cl/Documents/Dennishurtado/Desktop/contenedores/FDI009-TTNU8493344-FULLBLOOM/Informes%20de%20despacho?web=1)
+    const el = document.documentElement;
+    if (el.requestFullscreen) el.requestFullscreen();
 
-  // 2) Clase CSS para letras grandes
-  document.body.classList.add("modo-tv");
+    document.body.classList.add("modo-tv");
 
-  // 3) Auto-refresh del tablero
-  if (tvInterval) clearInterval(tvInterval);
-  tvInterval = setInterval(() => {
-    renderTabla();
-  }, TV_REFRESH_MS);
-}
-
-// Botón
-document.getElementById("btnTV").addEventListener("click", activarModoTV);
-
-// Si sales de pantalla completa, desactiva Modo TV
-document.addEventListener("fullscreenchange", () => {
-  if (!document.fullscreenElement) {
-    document.body.classList.remove("modo-tv");
     if (tvInterval) clearInterval(tvInterval);
+    tvInterval = setInterval(() => {
+      renderTabla();
+    }, TV_REFRESH_MS);
   }
-});
+
+  $("btnTV").addEventListener("click", activarModoTV);
+
+  document.addEventListener("fullscreenchange", () => {
+    if (!document.fullscreenElement) {
+      document.body.classList.remove("modo-tv");
+      if (tvInterval) clearInterval(tvInterval);
+    }
+  });
+
+  // Init
+  renderTabla();
 </script>
 </body>
 </html>
