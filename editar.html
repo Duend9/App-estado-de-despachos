@@ -40,8 +40,8 @@
 <div class="wrap grid">
   <section class="card">
     <div class="topbar">
-      <input id="filtro" placeholder="Buscar (exportadora, mercado, transporte, despacho…)" />
-   <a class="btn" href="index.html">🚦 Tablero</a>
+      <input id="filtro" placeholder="Buscar (exportadora, mercado, transporte, despacho…)">
+      <a class="btn" href="index.html">🚦 Tablero</a>
     </div>
 
     <div style="overflow:auto;max-height:70vh;border-radius:12px">
@@ -96,7 +96,6 @@
 <div class="toast" id="toast"><strong id="toastT">—</strong><div id="toastM">—</div></div>
 
 <script>
-  // === CONFIG ===
   const API_URL = "https://script.google.com/macros/s/AKfycbwj5pxE2ui8O9GEseGX74aktU2EiwDRYxXQbrCTo5uTn8wXbc55p4J5-p0-cJPqarWAJw/exec";
   const SECRET  = "FP2026DESPACHOS";
 
@@ -104,7 +103,7 @@
   let rows = [];
   let editId = null;
 
-  function toast(t,m){ $("toastT").textContent=t; $("toastM").textContent=m; $("toast").style.display="block"; setTimeout(()=>$("toast").style.display="none",2500); }
+  function toast(t,m){ $("toastT").textContent=t; $("toastM").textContent=m; $("toast").style.display="block"; setTimeout(()=>{$("toast").style.display="none"},2500); }
   function newId(){ return Date.now().toString(36)+"_"+Math.random().toString(16).slice(2); }
   function ahoraHHMM(){ return new Date().toTimeString().slice(0,5); }
 
@@ -118,11 +117,13 @@
   function parse(hhmm){ if(!hhmm) return null; const [h,m]=hhmm.split(":").map(Number); const d=new Date(); d.setHours(h,m,0,0); return d; }
   function diff(a,b){ if(!a||!b) return null; let m=Math.floor((b-a)/60000); if(m<0)m+=1440; return m; }
   function fmt(m){ if(m==null) return "—"; const h=Math.floor(m/60),mm=m%60; return h>0?`${h}h ${mm}m`:`${mm}m`; }
-  function tiempo(r){ if(r.horaTermino) return diff(parse(r.horaInicioCarga||r.horaLlegada),parse(r.horaTermino));
-                     if(r.horaLlegada) return diff(parse(r.horaInicioCarga||r.horaLlegada),new Date());
-                     return null; }
+  function tiempo(r){
+    if(r.horaTermino) return diff(parse(r.horaInicioCarga||r.horaLlegada),parse(r.horaTermino));
+    if(r.horaLlegada) return diff(parse(r.horaInicioCarga||r.horaLlegada),new Date());
+    return null;
+  }
 
-  // === JSONP LOAD (evita CORS) ===
+  // JSONP LOAD (CORS-safe)
   function loadRows(){
     return new Promise((resolve,reject)=>{
       const cb = "__cb_" + Date.now();
@@ -135,43 +136,38 @@
         }
       };
       const s = document.createElement("script");
+      // ✅ AQUÍ VA &callback= real (NO &amp;)
       s.src = `${API_URL}?secret=${encodeURIComponent(SECRET)}&callback=${encodeURIComponent(cb)}&_=${Date.now()}`;
       s.onerror = ()=>{ delete window[cb]; reject("Error cargando datos"); };
       document.body.appendChild(s);
-      // limpiar script luego
       setTimeout(()=>{ try{s.remove();}catch(e){} }, 5000);
     });
   }
 
-  // === POST por FORM (evita CORS) ===
+  // POST por FORM (CORS-safe)
   function postRow(row){
     return new Promise((resolve)=>{
-      const iframeName = "hidden_iframe";
-      let iframe = document.querySelector(`iframe[name="${iframeName}"]`);
+      const iframeName="hidden_iframe";
+      let iframe=document.querySelector(`iframe[name="${iframeName}"]`);
       if(!iframe){
-        iframe = document.createElement("iframe");
-        iframe.name = iframeName;
-        iframe.style.display="none";
+        iframe=document.createElement("iframe");
+        iframe.name=iframeName; iframe.style.display="none";
         document.body.appendChild(iframe);
       }
-      const form = document.createElement("form");
-      form.action = API_URL;
-      form.method = "POST";
-      form.target = iframeName;
+      const form=document.createElement("form");
+      form.action=API_URL; form.method="POST"; form.target=iframeName;
 
-      const inp1 = document.createElement("input");
+      const inp1=document.createElement("input");
       inp1.type="hidden"; inp1.name="secret"; inp1.value=SECRET;
 
-      const inp2 = document.createElement("input");
+      const inp2=document.createElement("input");
       inp2.type="hidden"; inp2.name="payload"; inp2.value=JSON.stringify(row);
 
       form.appendChild(inp1); form.appendChild(inp2);
       document.body.appendChild(form);
       form.submit();
       form.remove();
-
-      // No leemos respuesta (por cross-origin), pero recargamos después
-      setTimeout(()=>resolve(true), 300);
+      setTimeout(()=>resolve(true),300);
     });
   }
 
@@ -214,8 +210,8 @@
   }
 
   function limpiarForm(){
-    editId = null;
-    $("modo").textContent = "Nuevo";
+    editId=null;
+    $("modo").textContent="Nuevo";
     $("form").reset();
   }
 
@@ -252,32 +248,31 @@
   }
 
   function findById(id){ return rows.find(x=>String(x.id)===String(id)); }
-
   window.edit = (id)=>{ const r=findById(id); if(r) cargarForm(r); };
 
   window.llego = async (id)=>{
-    const r = findById(id); if(!r) return;
+    const r=findById(id); if(!r) return;
     r.horaLlegada = r.horaLlegada || ahoraHHMM();
-    r.cancelado = "false";
+    r.cancelado="false";
     await postRow(r);
     toast("✅ Guardado","Etapa: Llegó");
     refresh();
   };
   window.inicio = async (id)=>{
-    const r = findById(id); if(!r) return;
+    const r=findById(id); if(!r) return;
     r.horaLlegada = r.horaLlegada || ahoraHHMM();
     r.horaInicioCarga = r.horaInicioCarga || ahoraHHMM();
-    r.cancelado = "false";
+    r.cancelado="false";
     await postRow(r);
     toast("✅ Guardado","Etapa: Inicio");
     refresh();
   };
   window.termino = async (id)=>{
-    const r = findById(id); if(!r) return;
+    const r=findById(id); if(!r) return;
     r.horaLlegada = r.horaLlegada || ahoraHHMM();
     r.horaInicioCarga = r.horaInicioCarga || ahoraHHMM();
     r.horaTermino = r.horaTermino || ahoraHHMM();
-    r.cancelado = "false";
+    r.cancelado="false";
     await postRow(r);
     toast("✅ Guardado","Etapa: Término");
     refresh();
@@ -295,10 +290,8 @@
   $("btnNuevo").addEventListener("click", limpiarForm);
   $("btnEliminar").addEventListener("click", async ()=>{
     if(!editId) return toast("ℹ️","Selecciona un registro (Editar) primero");
-    const r = findById(editId);
-    if(!r) return;
+    const r=findById(editId); if(!r) return;
     if(!confirm("¿Eliminar este registro?")) return;
-    // eliminamos marcando cancelado y motivo (si prefieres borrado real, se hace en Apps Script)
     r.cancelado="true"; r.motivoCancelacion="Eliminado"; r.horaCancelacion=ahoraHHMM();
     await postRow(r);
     toast("✅","Eliminado (marcado)");
@@ -309,7 +302,6 @@
   $("btnReload").addEventListener("click", refresh);
   $("filtro").addEventListener("input", renderTabla);
 
-  // init + refresco
   refresh();
   setInterval(refresh, 30000);
 </script>
