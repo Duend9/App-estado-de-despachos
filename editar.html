@@ -127,6 +127,23 @@
   function diff(a,b){ if(!a||!b) return null; let m=Math.floor((b-a)/60000); if(m<0)m+=1440; return m; }
   function fmt(m){ if(m==null) return "—"; const h=Math.floor(m/60),mm=m%60; return h>0?`${h}h ${mm}m`:`${mm}m`; }
   function tiempo(r){
+    // ✅ Normaliza horas (evita 1899-12-30T...)
+function mostrarHora(v){
+  if(!v) return "—";
+
+  // Si ya viene como "HH:MM"
+  if(typeof v === "string" && v.includes(":") && v.length <= 5){
+    return v.slice(0,5);
+  }
+
+  // Si viene como fecha desde Sheets
+  const d = new Date(v);
+  if(!isNaN(d)){
+    return d.toTimeString().slice(0,5);
+  }
+
+  return "—";
+}
     if(r.horaTermino) return diff(parse(r.horaInicioCarga||r.horaLlegada),parse(r.horaTermino));
     if(r.horaLlegada) return diff(parse(r.horaInicioCarga||r.horaLlegada),new Date());
     return null;
@@ -213,7 +230,11 @@
       tr.innerHTML=`
         <td><b>${r.numeroDespacho||""}</b><div class="small">${r.tipoMovimiento||""}</div></td>
         <td><b>${r.exportadora||""}</b><div class="small">${r.mercado||""} · ${r.variedad||""}</div></td>
-        <td><b>${r.transporte||""}</b><div class="small">Pallets: ${r.cantidadPallets||"—"} · Cita: ${r.horaCitacion||"—"}</div></td>
+        <td><b>${r.transporte||""}</b><div class="small">
+  Pallets: ${r.cantidadPallets||"—"} · 
+  Cita: ${mostrarHora(r.horaCitacion)}
+</div>
+``</td>
         <td><span class="badge" style="background:${e.c}">${e.t}</span></td>
         <td><b>${fmt(tiempo(r))}</b></td>
         <td class="tools">
