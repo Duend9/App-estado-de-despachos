@@ -21,8 +21,19 @@
     button.danger{background:linear-gradient(180deg,#ff6b6b,#e74c3c);border-color:#e74c3c}
     button.primary{background:linear-gradient(180deg,#2d7dff,#1f5ed4);border-color:#1f5ed4}
     table{width:100%;border-collapse:collapse}
+
+    /* ✅ ENCABEZADOS FIJOS */
+    #tabla thead th{
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      background: #101a33;
+      color: var(--muted);
+      font-weight: 900;
+      border-bottom: 2px solid var(--line);
+    }
+
     th,td{border-bottom:1px solid var(--line);padding:10px 8px;text-align:left;vertical-align:top;font-size:13px}
-    th{color:var(--muted);font-weight:900;position:sticky;top:74px;background:rgba(16,26,51,.96)}
     .badge{display:inline-block;padding:6px 10px;border-radius:999px;color:white;font-weight:900;font-size:12px;white-space:nowrap}
     .small{font-size:12px;color:var(--muted);margin-top:4px}
     .tools{display:flex;gap:8px;flex-wrap:wrap}
@@ -77,11 +88,9 @@
       <label>Hora citación</label><input id="horaCitacion" type="time">
       <label>Cantidad pallets</label><input id="cantidadPallets" type="number" step="1">
       <label>Transporte</label><input id="transporte">
-
       <label>Hora llegada</label><input id="horaLlegada" type="time">
       <label>Hora inicio carga</label><input id="horaInicioCarga" type="time">
       <label>Hora término carga</label><input id="horaTermino" type="time">
-
       <label>Observaciones</label><textarea id="observaciones"></textarea>
 
       <div class="tools" style="margin-top:10px">
@@ -96,7 +105,6 @@
 <div class="toast" id="toast"><strong id="toastT">—</strong><div id="toastM">—</div></div>
 
 <script>
-  // ===== CONFIG =====
   const API_URL = "https://script.google.com/macros/s/AKfycbwj5pxE2ui8O9GEseGX74aktU2EiwDRYxXQbrCTo5uTn8wXbc55p4J5-p0-cJPqarWAJw/exec";
   const SECRET  = "FP2026DESPACHOS";
 
@@ -104,12 +112,7 @@
   let rows = [];
   let editId = null;
 
-  function toast(t,m){
-    $("toastT").textContent=t;
-    $("toastM").textContent=m;
-    $("toast").style.display="block";
-    setTimeout(()=>{$("toast").style.display="none"},2500);
-  }
+  function toast(t,m){ $("toastT").textContent=t; $("toastM").textContent=m; $("toast").style.display="block"; setTimeout(()=>{$("toast").style.display="none"},2500); }
   function newId(){ return Date.now().toString(36)+"_"+Math.random().toString(16).slice(2); }
   function ahoraHHMM(){ return new Date().toTimeString().slice(0,5); }
 
@@ -120,65 +123,41 @@
     return {t:"Despachado",c:"#2ecc71"};
   }
 
-  function parse(hhmm){
-    if(!hhmm) return null;
-    const [h,m]=hhmm.split(":").map(Number);
-    const d=new Date(); d.setHours(h,m,0,0);
-    return d;
-  }
-  function diff(a,b){
-    if(!a || !b) return null;
-    let m=Math.floor((b-a)/60000);
-    if(m<0) m+=1440;
-    return m;
-  }
-  function fmt(m){
-    if(m==null) return "—";
-    const h=Math.floor(m/60), mm=m%60;
-    return h>0?`${h}h ${mm}m`:`${mm}m`;
-  }
+  function parse(hhmm){ if(!hhmm) return null; const [h,m]=hhmm.split(":").map(Number); const d=new Date(); d.setHours(h,m,0,0); return d; }
+  function diff(a,b){ if(!a||!b) return null; let m=Math.floor((b-a)/60000); if(m<0)m+=1440; return m; }
+  function fmt(m){ if(m==null) return "—"; const h=Math.floor(m/60),mm=m%60; return h>0?`${h}h ${mm}m`:`${mm}m`; }
   function tiempo(r){
-    if(r.horaTermino) return diff(parse(r.horaInicioCarga||r.horaLlegada), parse(r.horaTermino));
-    if(r.horaLlegada) return diff(parse(r.horaInicioCarga||r.horaLlegada), new Date());
+    if(r.horaTermino) return diff(parse(r.horaInicioCarga||r.horaLlegada),parse(r.horaTermino));
+    if(r.horaLlegada) return diff(parse(r.horaInicioCarga||r.horaLlegada),new Date());
     return null;
   }
 
-  // ✅ LECTURA: ahora es JSON directo (array) desde doGet
   async function loadRows(){
-    const res = await fetch(API_URL, { method:"GET" });
+    const res = await fetch(API_URL);
     const data = await res.json();
     return Array.isArray(data) ? data : [];
   }
 
-  // ✅ ESCRITURA: POST por FORM + iframe (sin CORS)
   function postRow(row){
     return new Promise((resolve)=>{
       const iframeName="hidden_iframe";
       let iframe=document.querySelector(`iframe[name="${iframeName}"]`);
       if(!iframe){
         iframe=document.createElement("iframe");
-        iframe.name=iframeName;
-        iframe.style.display="none";
+        iframe.name=iframeName; iframe.style.display="none";
         document.body.appendChild(iframe);
       }
-
       const form=document.createElement("form");
-      form.action=API_URL;
-      form.method="POST";
-      form.target=iframeName;
+      form.action=API_URL; form.method="POST"; form.target=iframeName;
 
       const inp1=document.createElement("input");
       inp1.type="hidden"; inp1.name="secret"; inp1.value=SECRET;
-
       const inp2=document.createElement("input");
       inp2.type="hidden"; inp2.name="payload"; inp2.value=JSON.stringify(row);
 
-      form.appendChild(inp1);
-      form.appendChild(inp2);
+      form.appendChild(inp1); form.appendChild(inp2);
       document.body.appendChild(form);
-      form.submit();
-      form.remove();
-
+      form.submit(); form.remove();
       setTimeout(()=>resolve(true),300);
     });
   }
@@ -197,135 +176,71 @@
       horaLlegada: $("horaLlegada").value,
       horaInicioCarga: $("horaInicioCarga").value,
       horaTermino: $("horaTermino").value,
-      cancelado: "false",
-      motivoCancelacion: "",
-      horaCancelacion: "",
-      observaciones: $("observaciones").value.trim()
+      cancelado:"false",
+      motivoCancelacion:"",
+      horaCancelacion:"",
+      observaciones:$("observaciones").value.trim()
     };
   }
 
   function cargarForm(r){
-    editId = r.id;
-    $("modo").textContent = "Editando";
-    $("numeroDespacho").value = r.numeroDespacho || "";
-    $("exportadora").value = r.exportadora || "";
-    $("tipoMovimiento").value = r.tipoMovimiento || "";
-    $("variedad").value = r.variedad || "";
-    $("mercado").value = r.mercado || "";
-    $("horaCitacion").value = r.horaCitacion || "";
-    $("cantidadPallets").value = r.cantidadPallets || "";
-    $("transporte").value = r.transporte || "";
-    $("horaLlegada").value = r.horaLlegada || "";
-    $("horaInicioCarga").value = r.horaInicioCarga || "";
-    $("horaTermino").value = r.horaTermino || "";
-    $("observaciones").value = r.observaciones || "";
+    editId=r.id; $("modo").textContent="Editando";
+    $("numeroDespacho").value=r.numeroDespacho||"";
+    $("exportadora").value=r.exportadora||"";
+    $("tipoMovimiento").value=r.tipoMovimiento||"";
+    $("variedad").value=r.variedad||"";
+    $("mercado").value=r.mercado||"";
+    $("horaCitacion").value=r.horaCitacion||"";
+    $("cantidadPallets").value=r.cantidadPallets||"";
+    $("transporte").value=r.transporte||"";
+    $("horaLlegada").value=r.horaLlegada||"";
+    $("horaInicioCarga").value=r.horaInicioCarga||"";
+    $("horaTermino").value=r.horaTermino||"";
+    $("observaciones").value=r.observaciones||"";
   }
 
-  function limpiarForm(){
-    editId=null;
-    $("modo").textContent="Nuevo";
-    $("form").reset();
-  }
+  function limpiarForm(){ editId=null; $("modo").textContent="Nuevo"; $("form").reset(); }
 
-  async function refresh(){
-    try{
-      rows = await loadRows();
-      renderTabla();
-    }catch(err){
-      console.error(err);
-      toast("❌ Error", "No pude cargar datos desde Sheets");
-    }
-  }
+  async function refresh(){ rows=await loadRows(); renderTabla(); }
 
   function renderTabla(){
-    const q = ($("filtro").value||"").toLowerCase();
-    const tbody = document.querySelector("#tabla tbody");
+    const q=($("filtro").value||"").toLowerCase();
+    const tbody=document.querySelector("#tabla tbody");
     tbody.innerHTML="";
-
-    rows
-      .filter(r => !q || JSON.stringify(r).toLowerCase().includes(q))
-      .forEach(r=>{
-        const e = estado(r);
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td><b>${r.numeroDespacho||""}</b><div class="small">${r.tipoMovimiento||""}</div></td>
-          <td><b>${r.exportadora||""}</b><div class="small">${r.mercado||""} · ${r.variedad||""}</div></td>
-          <td><b>${r.transporte||""}</b><div class="small">Pallets: ${r.cantidadPallets||"—"} · Cita: ${r.horaCitacion||"—"}</div></td>
-          <td><span class="badge" style="background:${e.c}">${e.t}</span></td>
-          <td><b>${fmt(tiempo(r))}</b></td>
-          <td class="tools">
-            <button class="good" type="button" onclick="llego('${r.id}')">Llegó</button>
-            <button type="button" onclick="inicio('${r.id}')">Iniciar</button>
-            <button type="button" onclick="termino('${r.id}')">Terminar</button>
-            <button type="button" onclick="edit('${r.id}')">Editar</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
+    rows.filter(r=>!q||JSON.stringify(r).toLowerCase().includes(q)).forEach(r=>{
+      const e=estado(r);
+      const tr=document.createElement("tr");
+      tr.innerHTML=`
+        <td><b>${r.numeroDespacho||""}</b><div class="small">${r.tipoMovimiento||""}</div></td>
+        <td><b>${r.exportadora||""}</b><div class="small">${r.mercado||""} · ${r.variedad||""}</div></td>
+        <td><b>${r.transporte||""}</b><div class="small">Pallets: ${r.cantidadPallets||"—"} · Cita: ${r.horaCitacion||"—"}</div></td>
+        <td><span class="badge" style="background:${e.c}">${e.t}</span></td>
+        <td><b>${fmt(tiempo(r))}</b></td>
+        <td class="tools">
+          <button class="good" onclick="llego('${r.id}')">Llegó</button>
+          <button onclick="inicio('${r.id}')">Iniciar</button>
+          <button onclick="termino('${r.id}')">Terminar</button>
+          <button onclick="edit('${r.id}')">Editar</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
   }
 
   function findById(id){ return rows.find(x=>String(x.id)===String(id)); }
-  window.edit = (id)=>{ const r=findById(id); if(r) cargarForm(r); };
+  window.edit=id=>{const r=findById(id); if(r) cargarForm(r);};
+  window.llego=async id=>{const r=findById(id); if(!r)return; r.horaLlegada=r.horaLlegada||ahoraHHMM(); await postRow(r); toast("✅ Guardado","Llegó"); refresh();};
+  window.inicio=async id=>{const r=findById(id); if(!r)return; r.horaLlegada=r.horaLlegada||ahoraHHMM(); r.horaInicioCarga=r.horaInicioCarga||ahoraHHMM(); await postRow(r); toast("✅ Guardado","Inicio"); refresh();};
+  window.termino=async id=>{const r=findById(id); if(!r)return; r.horaLlegada=r.horaLlegada||ahoraHHMM(); r.horaInicioCarga=r.horaInicioCarga||ahoraHHMM(); r.horaTermino=r.horaTermino||ahoraHHMM(); await postRow(r); toast("✅ Guardado","Término"); refresh();};
 
-  window.llego = async (id)=>{
-    const r=findById(id); if(!r) return;
-    r.horaLlegada = r.horaLlegada || ahoraHHMM();
-    r.cancelado="false";
-    await postRow(r);
-    toast("✅ Guardado","Etapa: Llegó");
-    refresh();
-  };
-
-  window.inicio = async (id)=>{
-    const r=findById(id); if(!r) return;
-    r.horaLlegada = r.horaLlegada || ahoraHHMM();
-    r.horaInicioCarga = r.horaInicioCarga || ahoraHHMM();
-    r.cancelado="false";
-    await postRow(r);
-    toast("✅ Guardado","Etapa: Inicio");
-    refresh();
-  };
-
-  window.termino = async (id)=>{
-    const r=findById(id); if(!r) return;
-    r.horaLlegada = r.horaLlegada || ahoraHHMM();
-    r.horaInicioCarga = r.horaInicioCarga || ahoraHHMM();
-    r.horaTermino = r.horaTermino || ahoraHHMM();
-    r.cancelado="false";
-    await postRow(r);
-    toast("✅ Guardado","Etapa: Término");
-    refresh();
-  };
-
-  $("form").addEventListener("submit", async (e)=>{
-    e.preventDefault();
-    const r = leerForm();
-    await postRow(r);
-    toast("✅ Guardado", editId ? "Cambios actualizados" : "Registro creado");
-    limpiarForm();
-    refresh();
-  });
-
-  $("btnNuevo").addEventListener("click", limpiarForm);
-
-  $("btnEliminar").addEventListener("click", async ()=>{
-    if(!editId) return toast("ℹ️","Selecciona un registro (Editar) primero");
-    const r=findById(editId); if(!r) return;
-    if(!confirm("¿Eliminar este registro?")) return;
-    r.cancelado="true";
-    r.motivoCancelacion="Eliminado";
-    r.horaCancelacion=ahoraHHMM();
-    await postRow(r);
-    toast("✅","Eliminado (marcado)");
-    limpiarForm();
-    refresh();
-  });
-
-  $("btnReload").addEventListener("click", refresh);
-  $("filtro").addEventListener("input", renderTabla);
+  $("form").addEventListener("submit",async e=>{e.preventDefault(); const r=leerForm(); await postRow(r); toast("✅ Guardado",editId?"Actualizado":"Creado"); limpiarForm(); refresh();});
+  $("btnNuevo").addEventListener("click",limpiarForm);
+  $("btnEliminar").addEventListener("click",async()=>{ if(!editId)return toast("ℹ️","Selecciona un registro"); const r=findById(editId); if(!r)return; if(!confirm("¿Eliminar este registro?"))return; r.cancelado="true"; await postRow(r); toast("✅","Eliminado"); limpiarForm(); refresh();});
+  $("btnReload").addEventListener("click",refresh);
+  $("filtro").addEventListener("input",renderTabla);
 
   refresh();
-  setInterval(refresh, 30000);
+  setInterval(refresh,30000);
 </script>
 </body>
 </html>
+``
