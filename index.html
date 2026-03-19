@@ -118,16 +118,19 @@ tickClock();
 
 /* ===== ESTADO ===== */
 function estado(r){
-  if(String(r.cancelado || "").toLowerCase()==="true"){
-    return {t:"No llegó",c:"#e74c3c",k:4};
-  }
-  if(!r.horaLlegada){
-    return {t:"En espera",c:"#f7b500",k:1};
-  }
-  if(!r.horaTermino){
-    return {t:"Cargando",c:"#2d7dff",k:2};
-  }
+  if(String(r.cancelado||"").toLowerCase()==="true") return {t:"No llegó",c:"#e74c3c",k:4};
+  if(!r.horaLlegada) return {t:"En espera",c:"#f7b500",k:1};
+  if(!r.horaTermino) return {t:"Cargando",c:"#2d7dff",k:2};
   return {t:"Despachado",c:"#2ecc71",k:3};
+}
+
+/* ✅ NUEVA FUNCIÓN: normaliza horas */
+function mostrarHora(v){
+  if(!v) return "—";
+  if(typeof v==="string" && v.includes(":") && v.length<=5) return v.slice(0,5);
+  const d=new Date(v);
+  if(!isNaN(d)) return d.toTimeString().slice(0,5);
+  return "—";
 }
 
 /* ===== CARGA DATOS ===== */
@@ -158,7 +161,7 @@ async function render(){
       <td><b>${r.exportadora||""}</b><div class="small">${r.tipoMovimiento||""}</div></td>
       <td><b>${r.variedad||""}</b><div class="small">${r.mercado||""}</div></td>
       <td>${r.transporte||""}</td>
-      <td><b>${r.cantidadPallets||""}</b><div class="small">${r.horaCitacion||""}</div></td>
+      <td><b>${r.cantidadPallets||""}</b><div class="small">${mostrarHora(r.horaCitacion)}</div></td>
       <td><span class="badge" style="background:${e.c}">${e.t}</span></td>
     `;
     tbody.appendChild(tr);
@@ -177,4 +180,3 @@ setInterval(render,30000);
 
 </body>
 </html>
-``
