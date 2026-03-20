@@ -11,17 +11,47 @@
   --line:#22305a; --ok:#2ecc71; --warn:#f7b500;
   --work:#2d7dff; --bad:#e74c3c; --pallet:#cfa9ff;
 }
-body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#070b14,var(--bg));color:var(--text);}
-header{padding:16px;background:#0b1430;border-bottom:1px solid var(--line);}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+  background:linear-gradient(180deg,#070b14,var(--bg));
+  color:var(--text);
+}
+header{
+  padding:16px;
+  background:#0b1430;
+  border-bottom:1px solid var(--line);
+}
 .wrap{max-width:1500px;margin:auto;padding:14px}
+
+/* Reloj */
 .clockBox{text-align:center;margin-top:8px}
 .clock{font-size:40px;font-weight:900}
 .date{font-size:14px;color:var(--muted)}
-.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:16px 0;}
-.kpi{background:#101a33;border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+
+/* KPIs */
+.kpis{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:10px;
+  margin:16px 0;
+}
+.kpi{
+  background:#101a33;
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:10px;
+  text-align:center;
+}
 .kpi .label{font-size:12px;color:var(--muted)}
 .kpi .value{font-size:28px;font-weight:900}
-.wait{color:var(--warn)} .work{color:var(--work)} .ok{color:var(--ok)} .bad{color:var(--bad)} .pallet{color:var(--pallet)}
+.wait{color:var(--warn)}
+.work{color:var(--work)}
+.ok{color:var(--ok)}
+.bad{color:var(--bad)}
+.pallet{color:var(--pallet)}
+
+/* Tabla */
 table{width:100%;border-collapse:collapse;background:#101a33}
 th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left}
 th{color:var(--muted)}
@@ -42,81 +72,117 @@ th{color:var(--muted)}
 
 <div class="wrap">
 
-<div class="kpis">
-  <div class="kpi"><div class="label">🟡 En espera</div><div class="value wait" id="k1">0</div></div>
-  <div class="kpi"><div class="label">🔵 Cargando</div><div class="value work" id="k2">0</div></div>
-  <div class="kpi"><div class="label">🟢 Despachado</div><div class="value ok" id="k3">0</div></div>
-  <div class="kpi"><div class="label">🔴 No llegó</div><div class="value bad" id="k4">0</div></div>
-  <div class="kpi"><div class="label">📦 Pallets</div><div class="value pallet" id="k5">0</div></div>
-</div>
+  <div class="kpis">
+    <div class="kpi"><div class="label">🟡 En espera</div><div class="value wait" id="k1">0</div></div>
+    <div class="kpi"><div class="label">🔵 Cargando / Inspeccionando</div><div class="value work" id="k2">0</div></div>
+    <div class="kpi"><div class="label">🟢 Despachado / Inspeccionado</div><div class="value ok" id="k3">0</div></div>
+    <div class="kpi"><div class="label">🔴 No llegó / Reprogramado</div><div class="value bad" id="k4">0</div></div>
+    <div class="kpi"><div class="label">📦 Pallets</div><div class="value pallet" id="k5">0</div></div>
+  </div>
 
-<table>
-<thead>
-<tr>
-  <th>FechaProgramacion</th>
-  <th>Despacho</th>
-  <th>Exportadora / Movimiento</th>
-  <th>Variedad / Mercado</th>
-  <th>Transporte</th>
-  <th>Pallets / Citación</th>
-  <th>Estado</th>
-</tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
+  <table>
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Despacho</th>
+        <th>Exportadora / Movimiento</th>
+        <th>Variedad / Mercado</th>
+        <th>Transporte</th>
+        <th>Pallets / Citación</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
 
 </div>
 
 <script>
-const API_URL="https://script.google.com/macros/s/AKfycbwj5pxE2ui8O9GEseGX74aktU2EiwDRYxXQbrCTo5uTn8wXbc55p4J5-p0-cJPqarWAJw/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwj5pxE2ui8O9GEseGX74aktU2EiwDRYxXQbrCTo5uTn8wXbc55p4J5-p0-cJPqarWAJw/exec";
 
-function iso(o=0){const d=new Date();d.setDate(d.getDate()+o);return d.toISOString().slice(0,10);}
+/* ===== FECHAS ===== */
+function iso(offset=0){
+  const d=new Date();
+  d.setDate(d.getDate()+offset);
+  return d.toISOString().slice(0,10);
+}
 function fechaISO(v){
   if(!v) return "";
   if(typeof v==="string" && v.includes("-")) return v.slice(0,10);
   const d=new Date(v);
-  return !isNaN(d)?d.toISOString().slice(0,10):"";
+  return !isNaN(d) ? d.toISOString().slice(0,10) : "";
 }
-function mostrarHora(v){
-  if(!v) return "—";
-  if(typeof v==="string" && v.includes(":")) return v.slice(0,5);
-  const d=new Date(v); return !isNaN(d)?d.toTimeString().slice(0,5):"—";
+
+/* ===== RELOJ ===== */
+function tickClock(){
+  const d = new Date();
+  document.getElementById("clock").textContent = d.toLocaleTimeString("es-CL");
+  document.getElementById("date").textContent = d.toLocaleDateString("es-CL", {
+    weekday:"long", year:"numeric", month:"long", day:"numeric"
+  });
 }
+setInterval(tickClock,1000);
+tickClock();
+
+/* ===== ESTADO ===== */
 function estado(r){
   if(String(r.cancelado||"").toLowerCase()==="true") return {t:"No llegó",c:"#e74c3c",k:4};
   if(!r.horaLlegada) return {t:"En espera",c:"#f7b500",k:1};
   if(!r.horaTermino) return {t:"Cargando",c:"#2d7dff",k:2};
   return {t:"Despachado",c:"#2ecc71",k:3};
 }
-function ordenar(a,b){
-  const fa=fechaISO(a.fechaProgramacion), fb=fechaISO(b.fechaProgramacion);
-  if(fa!==fb) return fa.localeCompare(fb);
-  return String(a.numeroDespacho||"").localeCompare(String(b.numeroDespacho||""),undefined,{numeric:true});
-}
-async function loadRows(){
-  const r=await fetch(API_URL); return await r.json();
-}
-async function render(){
-  const all=await loadRows();
-  const hoy=iso(0), max=iso(2);
 
-  const rows=all
+/* ===== HORA ===== */
+function mostrarHora(v){
+  if(!v) return "—";
+  if(typeof v==="string" && v.includes(":")) return v.slice(0,5);
+  const d=new Date(v);
+  return !isNaN(d) ? d.toTimeString().slice(0,5) : "—";
+}
+
+/* ===== ORDEN ===== */
+function ordenar(a,b){
+  const fa=fechaISO(a.fechaProgramacion);
+  const fb=fechaISO(b.fechaProgramacion);
+  if(fa!==fb) return fa.localeCompare(fb);
+  return String(a.numeroDespacho||"").localeCompare(String(b.numeroDespacho||""), undefined, {numeric:true});
+}
+
+/* ===== DATA ===== */
+async function loadRows(){
+  const res = await fetch(API_URL);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}
+
+/* ===== RENDER ===== */
+async function render(){
+  const all = await loadRows();
+  const hoy = iso(0);
+  const max = iso(2);
+
+  const rows = all
     .filter(r=>{
-      const f=fechaISO(r.fechaProgramacion);
+      const f = fechaISO(r.fechaProgramacion);
       if(!f) return true;
-      return f>=hoy && f<=max;
+      return f >= hoy && f <= max;
     })
     .sort(ordenar);
 
-  let a=0,b=0,c=0,d=0,p=0;
-  const tb=document.getElementById("tbody"); tb.innerHTML="";
+  let a=0,b=0,c=0,d=0,pallets=0;
+  const tbody=document.getElementById("tbody");
+  tbody.innerHTML="";
 
   rows.forEach(r=>{
     const e=estado(r);
-    if(e.k===1)a++; if(e.k===2)b++; if(e.k===3){c++; p+=Number(r.cantidadPallets||0);} if(e.k===4)d++;
-    tb.innerHTML+=`
+    if(e.k===1)a++;
+    if(e.k===2)b++;
+    if(e.k===3){c++; pallets+=Number(r.cantidadPallets||0);}
+    if(e.k===4)d++;
+
+    tbody.innerHTML+=`
       <tr>
-        <td>${fechaISO(r.fechaProgramacion)}</td>
+        <td><b>${fechaISO(r.fechaProgramacion)}</b></td>
         <td><b>${r.numeroDespacho||""}</b></td>
         <td><b>${r.exportadora||""}</b><div class="small">${r.tipoMovimiento||""}</div></td>
         <td><b>${r.variedad||""}</b><div class="small">${r.mercado||""}</div></td>
@@ -126,8 +192,16 @@ async function render(){
       </tr>`;
   });
 
-  k1.textContent=a; k2.textContent=b; k3.textContent=c; k4.textContent=d; k5.textContent=p;
+  k1.textContent=a;
+  k2.textContent=b;
+  k3.textContent=c;
+  k4.textContent=d;
+  k5.textContent=pallets;
 }
-setInterval(render,30000); render();
+
+render();
+setInterval(render,30000);
 </script>
 
+</body>
+</html>
