@@ -36,7 +36,7 @@
 <body>
 <header>
   <h1>✏️ Edición (Google Sheets)</h1>
-  <p>Multiusuario · Ordenado por fecha + hora · Oculta antiguos por defecto</p>
+  <p>Multiusuario: todos ven lo mismo. Guarda por etapas.</p>
 </header>
 
 <div class="wrap grid">
@@ -44,10 +44,11 @@
     <div class="topbar">
       <input id="filtro" placeholder="Buscar texto…" />
 
+      <!-- ✅ FILTROS RÁPIDOS -->
       <div class="filters">
         <button id="fHoy">Hoy</button>
         <button id="fManana">Mañana</button>
-        <button id="fTodos">Todos</button>
+        <button id="fTodos" class="active">Todos</button>
       </div>
     </div>
 
@@ -89,68 +90,48 @@
 
 <script>
 const API_URL="https://script.google.com/macros/s/AKfycbwj5pxE2ui8O9GEseGX74aktU2EiwDRYxXQbrCTo5uTn8wXbc55p4J5-p0-cJPqarWAJw/exec";
+const SECRET="FP2026DESPACHOS";
 const $=id=>document.getElementById(id);
-let rows=[];
-let filtroFecha="todayTomorrow";
+let rows=[], filtroFecha="all";
 
-/* ==== Fechas base ==== */
-function isoHoy(offset=0){
-  const d=new Date();
-  d.setDate(d.getDate()+offset);
-  return d.toISOString().slice(0,10);
+function hoyISO(d=0){
+  const x=new Date(); x.setDate(x.getDate()+d);
+  return x.toISOString().slice(0,10);
 }
 
-/* ==== Estado ==== */
 function estado(r){
   if(!r.horaLlegada) return {t:"En espera",c:"#f7b500"};
   if(!r.horaTermino) return {t:"Cargando",c:"#2d7dff"};
   return {t:"Despachado",c:"#2ecc71"};
 }
 
-/* ==== Filtros de fecha ==== */
-function pasaFiltroFecha(r){
-  const f=r.fechaProgramacion;
-  if(!f) return false;
-
-  if(filtroFecha==="todayTomorrow"){
-    return f===isoHoy(0) || f===isoHoy(1);
-  }
-  if(filtroFecha==="today"){
-    return f===isoHoy(0);
-  }
-  if(filtroFecha==="tomorrow"){
-    return f===isoHoy(1);
-  }
-  return true;
-}
-
-/* ==== Orden por fecha + hora ==== */
-function ordenar(a,b){
-  if(a.fechaProgramacion!==b.fechaProgramacion){
-    return (a.fechaProgramacion||"").localeCompare(b.fechaProgramacion||"");
-  }
-  return (a.horaCitacion||"").localeCompare(b.horaCitacion||"");
+function fmtFecha(v){
+  if(!v) return "—";
+  return typeof v==="string"?v.slice(0,10):new Date(v).toLocaleDateString("es-CL");
 }
 
 async function loadRows(){
-  const r=await fetch(API_URL);
-  return await r.json();
+  const r=await fetch(API_URL); return await r.json();
+}
+
+function aplicarFiltroFecha(r){
+  if(filtroFecha==="today") return r.fechaProgramacion===hoyISO(0);
+  if(filtroFecha==="tomorrow") return r.fechaProgramacion===hoyISO(1);
+  return true;
 }
 
 function render(){
   const q=($("filtro").value||"").toLowerCase();
   const tbody=document.querySelector("#tabla tbody");
   tbody.innerHTML="";
-
   rows
-    .filter(pasaFiltroFecha)
-    .sort(ordenar)
+    .filter(aplicarFiltroFecha)
     .filter(r=>!q||JSON.stringify(r).toLowerCase().includes(q))
     .forEach(r=>{
       const e=estado(r);
       const tr=document.createElement("tr");
       tr.innerHTML=`
-        <td>${r.fechaProgramacion}</td>
+        <td>${fmtFecha(r.fechaProgramacion)}</td>
         <td>${r.numeroDespacho||""}</td>
         <td>${r.exportadora||""}</td>
         <td>${r.transporte||""}</td>
@@ -163,21 +144,17 @@ function render(){
 
 async function refresh(){ rows=await loadRows(); render(); }
 
-/* ==== Botones ==== */
+$("fHoy").onclick=()=>{filtroFecha="today";activar("fHoy")};
+$("fManana").onclick=()=>{filtroFecha="tomorrow";activar("fManana")};
+$("fTodos").onclick=()=>{filtroFecha="all";activar("fTodos")};
+
 function activar(id){
   ["fHoy","fManana","fTodos"].forEach(x=>$(x).classList.remove("active"));
   $(id).classList.add("active");
   render();
 }
 
-$("fHoy").onclick=()=>{filtroFecha="today";activar("fHoy")};
-$("fManana").onclick=()=>{filtroFecha="tomorrow";activar("fManana")};
-$("fTodos").onclick=()=>{filtroFecha="all";activar("fTodos")};
-
 $("filtro").oninput=render;
-
-/* Por defecto: Hoy + Mañana */
-activar("fHoy");
 refresh();
 </script>
 </body>
