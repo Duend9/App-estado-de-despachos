@@ -61,6 +61,7 @@
       <table id="tabla">
         <thead>
           <tr>
+            <th>Fecha</th>
             <th>Despacho</th>
             <th>Exportadora / Mercado</th>
             <th>Transporte</th>
@@ -82,6 +83,10 @@
     </div>
 
     <form id="form">
+      <!-- ✅ NUEVO CAMPO -->
+      <label>Fecha de programación</label>
+      <input id="fechaProgramacion" type="date">
+
       <label>N° Despacho</label><input id="numeroDespacho">
       <label>Exportadora</label><input id="exportadora">
       <label>Tipo de movimiento</label><input id="tipoMovimiento">
@@ -137,12 +142,24 @@
     return null;
   }
 
-  /* ✅ NUEVA FUNCIÓN: normaliza horas */
   function mostrarHora(v){
     if(!v) return "—";
     if(typeof v==="string" && v.includes(":") && v.length<=5) return v.slice(0,5);
     const d=new Date(v);
     if(!isNaN(d)) return d.toTimeString().slice(0,5);
+    return "—";
+  }
+
+  // ✅ NUEVA: mostrar fecha programación sin formato raro
+  function mostrarFecha(v){
+    if(!v) return "—";
+    // si ya viene "YYYY-MM-DD"
+    if(typeof v==="string" && v.length>=10 && v.includes("-")) return v.slice(0,10);
+    const d = new Date(v);
+    if(!isNaN(d)){
+      // formatea dd-mm-aaaa
+      return d.toLocaleDateString("es-CL");
+    }
     return "—";
   }
 
@@ -175,6 +192,9 @@
   function leerForm(){
     return {
       id: editId || newId(),
+      // ✅ NUEVO CAMPO (debe existir como encabezado en Sheets: fechaProgramacion)
+      fechaProgramacion: $("fechaProgramacion").value,
+
       numeroDespacho:$("numeroDespacho").value.trim(),
       exportadora:$("exportadora").value.trim(),
       tipoMovimiento:$("tipoMovimiento").value.trim(),
@@ -195,6 +215,12 @@
 
   function cargarForm(r){
     editId=r.id; $("modo").textContent="Editando";
+
+    // ✅ fecha de programación
+    $("fechaProgramacion").value = (typeof r.fechaProgramacion==="string" && r.fechaProgramacion.includes("-"))
+      ? r.fechaProgramacion.slice(0,10)
+      : (r.fechaProgramacion ? new Date(r.fechaProgramacion).toISOString().slice(0,10) : "");
+
     $("numeroDespacho").value=r.numeroDespacho||"";
     $("exportadora").value=r.exportadora||"";
     $("tipoMovimiento").value=r.tipoMovimiento||"";
@@ -221,6 +247,7 @@
       const e=estado(r);
       const tr=document.createElement("tr");
       tr.innerHTML=`
+        <td><b>${mostrarFecha(r.fechaProgramacion)}</b></td>
         <td><b>${r.numeroDespacho||""}</b><div class="small">${r.tipoMovimiento||""}</div></td>
         <td><b>${r.exportadora||""}</b><div class="small">${r.mercado||""} · ${r.variedad||""}</div></td>
         <td><b>${r.transporte||""}</b>
