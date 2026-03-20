@@ -98,7 +98,6 @@ th{color:var(--muted)}
 </div>
 
 <script>
-/* ===== CONFIG ===== */
 const API_URL = "https://script.google.com/macros/s/AKfycbwj5pxE2ui8O9GEseGX74aktU2EiwDRYxXQbrCTo5uTn8wXbc55p4J5-p0-cJPqarWAJw/exec";
 
 /* ===== FECHAS ===== */
@@ -106,6 +105,12 @@ function iso(offset=0){
   const d=new Date();
   d.setDate(d.getDate()+offset);
   return d.toISOString().slice(0,10);
+}
+function fechaISO(v){
+  if(!v) return "";
+  if(typeof v==="string" && v.includes("-")) return v.slice(0,10);
+  const d=new Date(v);
+  return !isNaN(d) ? d.toISOString().slice(0,10) : "";
 }
 
 /* ===== RELOJ ===== */
@@ -137,19 +142,16 @@ function mostrarHora(v){
   if(!v) return "—";
   if(typeof v==="string" && v.includes(":")) return v.slice(0,5);
   const d=new Date(v);
-  if(!isNaN(d)) return d.toTimeString().slice(0,5);
-  return "—";
+  return !isNaN(d) ? d.toTimeString().slice(0,5) : "—";
 }
 
 /* ===== ORDEN FECHA + DESPACHO ===== */
 function ordenar(a,b){
-  if(a.fechaProgramacion !== b.fechaProgramacion){
-    return (a.fechaProgramacion||"").localeCompare(b.fechaProgramacion||"");
-  }
+  const fa=fechaISO(a.fechaProgramacion);
+  const fb=fechaISO(b.fechaProgramacion);
+  if(fa!==fb) return fa.localeCompare(fb);
   return String(a.numeroDespacho||"").localeCompare(
-    String(b.numeroDespacho||""),
-    undefined,
-    { numeric:true, sensitivity:"base" }
+    String(b.numeroDespacho||""), undefined, {numeric:true}
   );
 }
 
@@ -163,9 +165,14 @@ async function loadRows(){
 /* ===== RENDER ===== */
 async function render(){
   const all = await loadRows();
+  const hoy=iso(0), max=iso(2);
 
   const rows = all
-    .filter(r => r.fechaProgramacion && r.fechaProgramacion >= iso(0) && r.fechaProgramacion <= iso(2))
+    .filter(r=>{
+      const f=fechaISO(r.fechaProgramacion);
+      if(!f) return true;           // ✅ no rompe registros antiguos
+      return f>=hoy && f<=max;      // ✅ oculta > +2 días
+    })
     .sort(ordenar);
 
   let a=0,b=0,c=0,d=0,pallets=0;
@@ -181,7 +188,7 @@ async function render(){
 
     const tr=document.createElement("tr");
     tr.innerHTML=`
-      <td><b>${r.fechaProgramacion||""}</b></td>
+      <td><b>${fechaISO(r.fechaProgramacion)}</b></td>
       <td><b>${r.numeroDespacho||""}</b></td>
       <td><b>${r.exportadora||""}</b><div class="small">${r.tipoMovimiento||""}</div></td>
       <td><b>${r.variedad||""}</b><div class="small">${r.mercado||""}</div></td>
