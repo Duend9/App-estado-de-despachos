@@ -8,69 +8,51 @@
 <style>
 :root{--bg:#0b1220;--card:#101a33;--text:#e9eefc;--muted:#a7b2d6;--line:#22305a;--ok:#2ecc71;--warn:#f7b500;--work:#2d7dff;--bad:#e74c3c;}
 body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#070b14,var(--bg));color:var(--text);}
-header{padding:16px 18px;position:sticky;top:0;background:rgba(11,18,32,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);z-index:10}
+header{padding:16px 18px;position:sticky;top:0;background:rgba(11,18,32,.92);border-bottom:1px solid var(--line);z-index:10}
 header h1{margin:0;font-size:18px}
-header p{margin:6px 0 0;color:var(--muted);font-size:13px}
 .wrap{max-width:1200px;margin:0 auto;padding:16px}
-.grid{display:grid;gap:12px;min-height:70vh}
+.grid{display:grid;gap:12px}
 @media(min-width:980px){.grid{grid-template-columns:1.2fr .8fr}}
-.card{background:rgba(16,26,51,.92);border:1px solid var(--line);border-radius:14px;padding:14px}
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-.filters{display:flex;gap:6px}
+.card{background:#101a33;border:1px solid var(--line);border-radius:14px;padding:14px}
 input,textarea{width:100%;padding:10px;background:#0b1430;color:var(--text);border:1px solid var(--line);border-radius:10px}
 textarea{min-height:90px}
-button{border:1px solid var(--line);background:#0b1430;color:var(--text);padding:8px 12px;border-radius:10px;font-weight:900;cursor:pointer}
-button.active{background:#2d7dff}
+button{border:1px solid var(--line);background:#0b1430;color:#fff;padding:8px 12px;border-radius:10px;font-weight:900}
 button.good{background:#2ecc71}
 button.primary{background:#2d7dff}
 button.danger{background:#e74c3c}
 table{width:100%;border-collapse:collapse}
-#tabla thead th{position:sticky;top:0;background:#101a33;color:var(--muted);border-bottom:2px solid var(--line)}
-th,td{border-bottom:1px solid var(--line);padding:8px;font-size:13px}
+th,td{border-bottom:1px solid var(--line);padding:8px}
 .badge{padding:6px 10px;border-radius:999px;color:#fff;font-weight:900;font-size:12px}
-.small{font-size:12px;color:var(--muted)}
-.tools{display:flex;gap:6px;flex-wrap:wrap}
+.small{font-size:12px;color:#a7b2d6}
+.tools{display:flex;gap:6px}
 </style>
 </head>
 
 <body>
+
 <header>
   <h1>✏️ Edición (Google Sheets)</h1>
-  <p>Orden automático por fecha + hora · Oculta históricos (+2 días)</p>
 </header>
 
 <div class="wrap grid">
 
-<!-- ================= TABLA ================= -->
 <section class="card">
-  <div class="topbar">
-    <input id="filtro" placeholder="Buscar despacho, exportadora, mercado…">
-    <div class="filters">
-      <button id="fHoy">Hoy</button>
-      <button id="fManana">Mañana</button>
-      <button id="fTodos">Todos</button>
-    </div>
-  </div>
-
-  <div style="overflow:auto;max-height:70vh">
-    <table id="tabla">
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Despacho</th>
-          <th>Exportadora / Mercado</th>
-          <th>Transporte</th>
-          <th>Estado</th>
-          <th>⏱</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+  <table id="tabla">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Despacho</th>
+        <th>Exportadora / Mercado</th>
+        <th>Transporte</th>
+        <th>Estado</th>
+        <th>⏱</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 </section>
 
-<!-- ================= FORM ================= -->
 <section class="card">
 <form id="form">
   <label>Fecha de programación</label>
@@ -89,7 +71,7 @@ th,td{border-bottom:1px solid var(--line);padding:8px;font-size:13px}
   <label>Hora término carga</label><input id="horaTermino" type="time">
   <label>Observaciones</label><textarea id="observaciones"></textarea>
 
-  <div class="tools" style="margin-top:10px">
+  <div class="tools">
     <button class="primary">Guardar</button>
     <button type="button" id="btnNuevo">Nuevo</button>
     <button type="button" id="btnEliminar" class="danger">Eliminar</button>
@@ -103,131 +85,88 @@ th,td{border-bottom:1px solid var(--line);padding:8px;font-size:13px}
 const API_URL="https://script.google.com/macros/s/AKfycbwj5pxE2ui8O9GEseGX74aktU2EiwDRYxXQbrCTo5uTn8wXbc55p4J5-p0-cJPqarWAJw/exec";
 const SECRET="FP2026DESPACHOS";
 const $=id=>document.getElementById(id);
+let rows=[], editId=null;
 
-let rows=[], editId=null, filtroFecha="rango";
-
-/* ===== util fechas ===== */
-function iso(offset=0){const d=new Date();d.setDate(d.getDate()+offset);return d.toISOString().slice(0,10);}
-function hh(v){ if(!v) return ""; if(typeof v==="string") return v.slice(0,5); return new Date(v).toTimeString().slice(0,5); }
-
-/* ===== estado ===== */
-function estado(r){
-  if(String(r.cancelado||"").toLowerCase()==="true") return {t:"No llegó",c:"#e74c3c"};
-  if(!r.horaLlegada) return {t:"En espera",c:"#f7b500"};
-  if(!r.horaTermino) return {t:"Cargando",c:"#2d7dff"};
-  return {t:"Despachado",c:"#2ecc71"};
+function fechaISO(v){
+  if(!v) return "";
+  if(typeof v==="string" && v.includes("-")) return v.slice(0,10);
+  const d=new Date(v);
+  return !isNaN(d)?d.toISOString().slice(0,10):"";
 }
-
-/* ===== filtros ===== */
-function pasaFiltroFecha(r){
-  const f=r.fechaProgramacion;
-  if(!f) return false;
-  if(filtroFecha==="rango") return f>=iso(0) && f<=iso(2);
-  if(filtroFecha==="today") return f===iso(0);
-  if(filtroFecha==="tomorrow") return f===iso(1);
-  return true;
-}
-
-/* ===== orden ===== */
-function ordenar(a,b){
-  if(a.fechaProgramacion!==b.fechaProgramacion)
-    return (a.fechaProgramacion||"").localeCompare(b.fechaProgramacion||"");
-  return (a.horaCitacion||"").localeCompare(b.horaCitacion||"");
+function hh(v){
+  if(!v) return "";
+  if(typeof v==="string") return v.slice(0,5);
+  return new Date(v).toTimeString().slice(0,5);
 }
 
 async function loadRows(){
-  const r=await fetch(API_URL); return await r.json();
+  const r=await fetch(API_URL);
+  rows=await r.json();
+  render();
 }
 
 function render(){
-  const q=($("filtro").value||"").toLowerCase();
   const tb=document.querySelector("#tabla tbody");
   tb.innerHTML="";
-  rows
-    .filter(pasaFiltroFecha)
-    .sort(ordenar)
-    .filter(r=>!q||JSON.stringify(r).toLowerCase().includes(q))
-    .forEach(r=>{
-      const e=estado(r);
-      tb.innerHTML+=`
-      <tr>
-        <td>${r.fechaProgramacion||""}</td>
-        <td><b>${r.numeroDespacho||""}</b><div class="small">${r.tipoMovimiento||""}</div></td>
-        <td><b>${r.exportadora||""}</b><div class="small">${r.mercado||""} · ${r.variedad||""}</div></td>
-        <td>${r.transporte||""}<div class="small">Cita ${hh(r.horaCitacion)}</div></td>
-        <td><span class="badge" style="background:${e.c}">${e.t}</span></td>
-        <td>${hh(r.horaInicioCarga)||"—"}</td>
-        <td class="tools">
-          <button class="good" onclick="llego('${r.id}')">Llegó</button>
-          <button onclick="inicio('${r.id}')">Iniciar</button>
-          <button onclick="termino('${r.id}')">Terminar</button>
-          <button onclick="edit('${r.id}')">Editar</button>
-        </td>
-      </tr>`;
-    });
+  rows.forEach(r=>{
+    tb.innerHTML+=`
+    <tr>
+      <td>${fechaISO(r.fechaProgramacion)}</td>
+      <td><b>${r.numeroDespacho||""}</b></td>
+      <td>${r.exportadora||""}<div class="small">${r.mercado||""}</div></td>
+      <td>${r.transporte||""}</td>
+      <td><span class="badge">${r.horaLlegada?"Cargando":"En espera"}</span></td>
+      <td>${hh(r.horaInicioCarga)}</td>
+      <td class="tools">
+        <button class="good" onclick="edit('${r.id}')">Editar</button>
+      </td>
+    </tr>`;
+  });
 }
 
-async function refresh(){ rows=await loadRows(); render(); }
-
-/* ===== acciones ===== */
 function leerForm(){
   return {
     id: editId || Date.now().toString(36),
-    fechaProgramacion:$("fechaProgramacion").value,
-    numeroDespacho:$("numeroDespacho").value,
-    exportadora:$("exportadora").value,
-    tipoMovimiento:$("tipoMovimiento").value,
-    variedad:$("variedad").value,
-    mercado:$("mercado").value,
-    horaCitacion:$("horaCitacion").value,
-    cantidadPallets:$("cantidadPallets").value,
-    transporte:$("transporte").value,
-    horaLlegada:$("horaLlegada").value,
-    horaInicioCarga:$("horaInicioCarga").value,
-    horaTermino:$("horaTermino").value,
-    cancelado:"false",
-    observaciones:$("observaciones").value
+    fechaProgramacion: fechaISO($("fechaProgramacion").value),
+    numeroDespacho: $("numeroDespacho").value,
+    exportadora: $("exportadora").value,
+    tipoMovimiento: $("tipoMovimiento").value,
+    variedad: $("variedad").value,
+    mercado: $("mercado").value,
+    horaCitacion: $("horaCitacion").value,
+    cantidadPallets: $("cantidadPallets").value,
+    transporte: $("transporte").value,
+    horaLlegada: $("horaLlegada").value,
+    horaInicioCarga: $("horaInicioCarga").value,
+    horaTermino: $("horaTermino").value,
+    observaciones: $("observaciones").value,
+    cancelado:"false"
   };
 }
 
 function postRow(r){
   const f=document.createElement("form");
-  f.method="POST";f.action=API_URL;
+  f.method="POST"; f.action=API_URL;
   [["secret",SECRET],["payload",JSON.stringify(r)]].forEach(([n,v])=>{
     const i=document.createElement("input");i.type="hidden";i.name=n;i.value=v;f.appendChild(i);
   });
-  document.body.appendChild(f);f.submit();f.remove();
+  document.body.appendChild(f); f.submit(); f.remove();
 }
 
 window.edit=id=>{
-  const r=rows.find(x=>x.id==id); if(!r) return;
+  const r=rows.find(x=>x.id===id);
+  if(!r) return;
   editId=id;
-  Object.keys(r).forEach(k=>$(k)&&( $(k).value = hh(r[k]) || r[k] ));
+  $("fechaProgramacion").value=fechaISO(r.fechaProgramacion);
+  Object.keys(r).forEach(k=>$(k)&&($(k).value=r[k]));
 };
 
-window.llego=id=>{const r=rows.find(x=>x.id==id);r.horaLlegada=r.horaLlegada||hh(new Date());postRow(r);refresh();}
-window.inicio=id=>{const r=rows.find(x=>x.id==id);r.horaInicioCarga=r.horaInicioCarga||hh(new Date());postRow(r);refresh();}
-window.termino=id=>{const r=rows.find(x=>x.id==id);r.horaTermino=r.horaTermino||hh(new Date());postRow(r);refresh();}
+$("form").onsubmit=e=>{e.preventDefault();postRow(leerForm());editId=null;loadRows();};
+$("btnNuevo").onclick=()=>{editId=null;$("form").reset();};
+$("btnEliminar").onclick=()=>{if(!editId)return;const r=rows.find(x=>x.id===editId);r.cancelado="true";postRow(r);editId=null;loadRows();};
 
-$("form").onsubmit=e=>{e.preventDefault();postRow(leerForm());editId=null;refresh();}
-$("btnNuevo").onclick=()=>{editId=null;$("form").reset();}
-$("btnEliminar").onclick=()=>{if(!editId)return;const r=rows.find(x=>x.id==editId);r.cancelado="true";postRow(r);editId=null;refresh();}
-
-function activar(id){
-  ["fHoy","fManana","fTodos"].forEach(x=>$(x).classList.remove("active"));
-  $(id).classList.add("active");
-  render();
-}
-
-$("fHoy").onclick=()=>{filtroFecha="today";activar("fHoy")}
-$("fManana").onclick=()=>{filtroFecha="tomorrow";activar("fManana")}
-$("fTodos").onclick=()=>{filtroFecha="all";activar("fTodos")}
-$("filtro").oninput=render;
-
-/* inicio */
-filtroFecha="rango";
-activar("fHoy");
-refresh();
+loadRows();
 </script>
+
 </body>
 </html>
